@@ -1,4 +1,4 @@
-# Observo 
+# Observo [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FOnoTools%2FObservo.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FOnoTools%2FObservo?ref=badge_shield)
 
 A multi-user data manipulation system
 
