@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Button, Intent, Spinner, Switch, Tooltip, Icon, ProgressBar, Dialog, MenuDivider, Popover, Alignment, Menu, MenuItem, Classes, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
 import { Layout } from "crust"
 import { AppToaster } from "./toaster";
+import {GlobalContext} from "global-context"
 require("babel-polyfill")
 
 

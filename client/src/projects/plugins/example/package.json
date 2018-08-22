@@ -3,5 +3,5 @@
     "version": "0.0.1",
     "main": "example.js",
     "private": true,
-    "consumes": ["api:jso"]
+    "consumes": ["api:jso", "api:page"]
 }

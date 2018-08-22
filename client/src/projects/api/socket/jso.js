@@ -1,19 +1,18 @@
 //Example (Client) Page
 Observo.onMount((imports) => {
-    console.log(imports)
+    
 })
-Observo.onCustomMount((custom) => {
-    console.log(custom)
-    for (let plugin in custom.plugins) {
-        console.log(plugin)
-        custom.plugins[plugin].CLIENT.loadPage()
-    }
+Observo.register(null, {
+  GLOBAL: {
+      addHandler: (callback) => {
+          let name;
+          try { throw new Error(); }
+          catch (e) {
+              var re = /(\w+)@|at (\w+) \(/g, st = e.stack, m;
+              re.exec(st), m = re.exec(st);
+              name = m[1] || m[2];
+          }
+          console.log(name)
+      }
+  }
 })
-Observo.register(null, () => {
-   GLOBAL: {
-       cheese: () => {
-           console.log("Cheese")
-       }
-   }
-})
-

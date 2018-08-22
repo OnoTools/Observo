@@ -23,7 +23,9 @@
                         "./src"
                     ],
                     "alias": {
-                        "crust": "./crust/crust.jsx"
+                        "crust": "./crust/crust.jsx",
+                        "global-context": "./context/globalContext.jsx",
+                        "window-controller": "./src/window.js"
                     }
                 }
             ],

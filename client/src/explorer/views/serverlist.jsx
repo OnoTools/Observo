@@ -1,10 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Dialog, Alignment, ButtonGroup, ContextMenu, Menu, MenuItem, Classes, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
 import { Layout } from "crust"
-import classNames from 'classnames'
-import hotkeys from 'hotkeys-js';
-import io from 'socket.io-client';
-import { constants } from 'os';
+import {GlobalContext} from "global-context"
 require("babel-polyfill")
 
 export default class ServerList extends Component {
@@ -50,14 +47,13 @@ export default class ServerList extends Component {
      * RenderServers - Renders all servers listed on the sidebar
      */
     renderServers() {
-
         if (stash.has('serverList')) {
             let servers = stash.get('serverList')
             let items = []
             for (let server in servers) {
                 let s = servers[server]
                 items.push(
-                    <Layout.Grid key={s} height="50px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onClick={this.connectToServer.bind(this, s.ip, s.name)} onContextMenu={(this.showContext.bind(this))} background="gray">
+                    <Layout.Grid key={server} height="50px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onClick={this.connectToServer.bind(this, s.ip, s.name)} onContextMenu={(this.showContext.bind(this))} background="gray">
                         <p>{s.name}</p>
                         <p>{s.ip}</p>
                     </Layout.Grid>

@@ -31,6 +31,9 @@ export default class DocTab extends Component {
         this.setState({ selectedTab: id, selectedTabX: x, dragging: true })
         if (this.props.onSelect) {
             this.props.onSelect(this.state.tabs[id].title)
+            if (this.props.onChange) {
+                this.props.onChange(this.state.tabs, id)
+            }
         }
     }
     /**
@@ -56,7 +59,7 @@ export default class DocTab extends Component {
         }
         let tabs = this.state.tabs
         if (this.tabLocation != null) {
-            let tabs_new = array_move(tabs, this.state.selectedTab, this.tabLocation) 
+            let tabs_new = array_move(tabs, this.state.selectedTab, this.tabLocation)
             for (let tab in tabs_new) {
                 if (tab == this.tabLocation) {
                     tabs_new[tab].selected = true
@@ -64,7 +67,15 @@ export default class DocTab extends Component {
                     tabs_new[tab].selected = false
                 }
             }
+            let loop = 0
+            for (let _tab in tabs_new) {
+                if (tabs_new[_tab].selected == true) break
+                loop++
+            }
             this.setState({tabs: tabs, selectedTabX: 0, selectedTab: this.tabLocation, dragging: false})      
+            if (this.props.onChange) {
+                this.props.onChange(tabs, loop)
+            }
         }
 
     }
@@ -139,7 +150,7 @@ export default class DocTab extends Component {
     }
     updateDimensions() {
         var width = ReactDOM.findDOMNode(this.refs.area).getBoundingClientRect().width
-        console.log(width)
+        //console.log(width)
         this.setState({ width: width });
     }
     componentDidMount() {
@@ -149,7 +160,7 @@ export default class DocTab extends Component {
     componentWillReceiveProps() {
         if (this.props.tabs) {
             this.updateDimensions();
-            console.log("updated")
+            //console.log("updated")
             this.setState({ tabs: this.props.tabs })
         }
     }

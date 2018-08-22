@@ -1,9 +1,16 @@
-let DefinedManager = require("./defined")
+/**
+ * Observo: Server
+ * @author ImportProgram
+ * @copyright (C) 2018 OnoTools
+ */
+
+
+let DefinedManager = require("./defined.o.js")
 
 let manager = new DefinedManager()
-manager.setDefinedID("Observo")
-manager.addDefined("API", "./api", true, ["API"])
-manager.addDefined("PLUGINS", "./plugins", false)
+manager.setDefinedID("Observo") //Custom NAMESPACE
+manager.addDefined("API", "./api", true, ["API"]) //LOAD ALL API's
+manager.addDefined("PLUGINS", "./plugins", false) //LOAD CUSTOM PLUGINS
 manager.onAppReady((console) => {
-    
+    //Ready!
 })

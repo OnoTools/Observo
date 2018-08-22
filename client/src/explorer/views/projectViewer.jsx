@@ -4,20 +4,47 @@ import { Layout } from "crust"
 import classNames from 'classnames'
 import hotkeys from 'hotkeys-js';
 import io from 'socket.io-client';
+import { GlobalContext } from "global-context"
 import moment from 'moment';
+import {remote} from 'electron'
+const { BrowserWindow } = remote
+const managerLocal = require("import-window")
+const managerRemote = remote.require("import-window")
 window.moment = moment;
-require("babel-polyfill")
 
-export default class ProjectViewer extends Component {
+require("babel-polyfill")
+class ProjectViewer extends Component {
     constructor() {
         super()
         this.state = {
-            alertDisconnect: false
+            alertDisconnect: false,       
+            user: {
+                roles: [],
+                name: null
+            }
         }
     }
     /**
      * GoBack - Go Back? idk
      */
+    openWindow() {
+
+    }
+    componentDidMount() {
+        let self = this
+        this.props.globalEvents.on("SOCKET:connected", (socket) =>{
+            socket.client.on("core_userData", (data) => {
+                self.setState({ user: data })
+            })
+            socket.client.on("core_projectList", (data) => {
+                self.setState({ projects: data})
+            })
+            socket.client.on("auth_vaildSignin", (data) => {
+                self.setState({auth: data})
+                
+            })
+        })
+    }
     goBack() {
         if (this.state.alertDisconnect == false) {
             this.setState({ alertDisconnect: true })
@@ -34,21 +61,48 @@ export default class ProjectViewer extends Component {
             // menu was closed; callback optional
         });
     }
+    openProject(project) {
+        console.log("new window")
+        let args = managerLocal.parseArgs() 
+        console.log(args)
+        let mainWin = managerRemote.createWindow({
+            show: false,
+            width: 1000,
+            height: 800,
+            frame: false,
+            color: "#000",
+            webPreferences: {
+              zoomFactor: 0.9,
+            }
+          })
+          //Intead of __dirname we used '.getDir()' 
+          mainWin.setURL(managerRemote.getDir(), "./src/projects/index.html", {
+            ip: this.props.serverProperties.ip,
+            authKey: this.state.auth.authKey,
+            uuid: this.state.auth.uuid,
+            project: project,
+          })
+          mainWin.win.setMinimumSize(800, 700);
+            mainWin.win.webContents.on('did-finish-load', () => {
+            mainWin.win.show()
+            //win.close();
+          })
+    }
     /**
      * RenderServers - Renders all servers listed on the sidebar
      */
     renderServers() {
-        if (this.props.projects != null) {
+        if (this.state.projects != null) {
             let items = []
-            for (let p in this.props.projects) {
-                let project = this.props.projects[p]
+            for (let p in this.state.projects) {
+                let project = this.state.projects[p]
+                console.log(project)
                 items.push(
-                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onContextMenu={this.showContext.bind(true)} className="box">
+                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onContextMenu={this.showContext.bind(true)}  onClick={this.openProject.bind(this, project.name)}className="box">
                         <p>{project.name}</p>
                         <p>Last Edited: {moment(new Date(project.lastEdited.replace(/\s/g, "T")).toUTCString()).fromNow()}</p>
                     </Layout.Grid>
                 )
-                console.log(new Date(project.lastEdited.replace(/\s/g, "T")).toUTCString())
             }
             return items
         }
@@ -65,7 +119,7 @@ export default class ProjectViewer extends Component {
             intent={Intent.DANGER}
             isOpen={this.state.alertDisconnect}
             onCancel={this.goBack.bind(this)}
-            onConfirm={() => { this.setState({ alertDisconnect: false }); this.props.socketDisconnect() }}
+            onConfirm={() => { this.setState({ alertDisconnect: false }); this.props.globalEvents.emit("SOCKET:close") }}
         >
             <p>
                 Are you sure you want to disconnect? </p>
@@ -95,10 +149,10 @@ export default class ProjectViewer extends Component {
                                 <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: 108 }}>
                                     <Layout.Grid row>
                                         <Layout.Grid>
-                                            <h2>{this.props.userData.name}</h2>
+                                            <h2>{this.state.user.name}</h2>
                                         </Layout.Grid>
                                         <Layout.Grid col>
-                                            {renderRoles(this.props.userData.roles)}
+                                            {renderRoles(this.state.user.roles)}
                                         </Layout.Grid>
                                     </Layout.Grid>
                                 </Card>
@@ -126,8 +180,12 @@ export default class ProjectViewer extends Component {
             </Layout.Grid>
             {this.renderDisconnect()}
         </Layout.Grid>
-
     }
 }
 
 
+export default props => (
+    <GlobalContext.Consumer>
+      {context => <ProjectViewer {...props}  globalEvents={context.globalEvent} />}
+    </GlobalContext.Consumer>
+  );

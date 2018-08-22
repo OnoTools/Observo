@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Dialog, Alignment, ButtonGroup, Menu, MenuItem, Classes, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
 import { Layout } from "crust"
+import {GlobalContext} from "global-context"
 import classNames from 'classnames'
 import hotkeys from 'hotkeys-js';
 import io from 'socket.io-client';

@@ -1,6 +1,6 @@
 /**
  * Socket API for Observo
- * @author ImportPython
+ * @author ImportProgram
  */
 
 var io = require('socket.io').listen(3000)
@@ -20,9 +20,23 @@ Observo.onCustomMount((imports) => {
             console.log("$DClient Disconnected: $f" + sessionKey)
             client.disconnect()
         })
-        client.emit("auth_sessionKey", sessionKey)
         client.on("auth_signIn", function (data) {
             console.log(JSON.stringify(data))
+            if (data.authKey != null) {
+                database.signInViaKey(data.authKey, sessionKey, (response) => {
+                    console.log(JSON.stringify(response))
+                    if (response != null) {
+                        if (connectedClients[response.uuid] != null) {
+                            connectedClients[response.uuid].emit("auth_signInNewDevice")
+                        }
+                        vaildAuth = true
+                        userUUID = response.uuid
+                        client.emit("auth_vaildSignin", { authKey: response.authKey, sessionKey: sessionKey, uuid: response.uuid })
+                        connectedClients[response.uuid] = client
+                        console.log("VALID USER (because it is)")
+                    }
+                })
+            }
             if (data.password != null && data.username != null) {
                 let username = data.username.trim()
                 let password = data.password.trim()
@@ -52,42 +66,50 @@ Observo.onCustomMount((imports) => {
                 }
             }
         })
-        client.on("core_projectList",  (data) => {
-            database.listProjects((projects) => {
-                let data = []
-                for (let p in projects) {
-                    let project = projects[p]
-                    let custom = {
-                        name: project.name,
-                        lastEdited: project.last_edited,
-                        plugins: null
+        client.on("core_getProject", (data) => {
+            if(vaildAuth) {
+                database.getProject(data.project, (projectData) => {
+                    client.emit("core_getProject", projectData)
+                })
+            }
+        })
+        client.on("core_projectList", (data) => {
+            if (vaildAuth) {
+                database.listProjects((projects) => {
+                    let data = []
+                    for (let p in projects) {
+                        let project = projects[p]
+                        let custom = {
+                            name: project.name,
+                            lastEdited: project.last_edited,
+                            plugins: null
+                        }
+                        data.push(custom)
                     }
-                    data.push(custom)
-                }
-                client.emit("core_projectList", data)
-            })
-            database.getUser(userUUID, (data) => {
-                console.log(JSON.stringify(data))
-                let userRoles = JSON.parse(data.role)
+                    client.emit("core_projectList", data)
+                })
+                database.getUser(userUUID, (data) => {
+                    console.log(JSON.stringify(data))
+                    let userRoles = JSON.parse(data.role)
 
-                database.getRoles((roles) => {
-                    console.log("-----")
-                    console.log(JSON.stringify(roles))
-                    let roleData = []
-                    for (let i in userRoles) {
-                        let userRole = userRoles[i]
-                        for (let j in roles) {
-                            let role = roles[j]
-                            if (userRole == role.uuid) {
-                                roleData.push({name: role.name, uuid: role.uuid, color: role.color})
+                    database.getRoles((roles) => {
+                        console.log("-----")
+                        console.log(JSON.stringify(roles))
+                        let roleData = []
+                        for (let i in userRoles) {
+                            let userRole = userRoles[i]
+                            for (let j in roles) {
+                                let role = roles[j]
+                                if (userRole == role.uuid) {
+                                    roleData.push({ name: role.name, uuid: role.uuid, color: role.color })
+                                }
                             }
                         }
-                    }    
-                    client.emit("core_userData", {name: data.username, roles: roleData})
+                        client.emit("core_userData", { name: data.username, roles: roleData })
+                    })
                 })
-                
-            })
-         })
+            }
+        })
 
     })
 })
@@ -104,7 +126,7 @@ Observo.register(null, {
                 re.exec(st), m = re.exec(st);
                 name = m[1] || m[2];
             }
-
+            console.log(name)
             if (handler[name] == null) {
                 handler[name] = {}
                 let main = io.of("/plugins/" + name).on('connection', function (client) {

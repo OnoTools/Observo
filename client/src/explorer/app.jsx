@@ -4,15 +4,19 @@ import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, N
 import { Cell, col, Table } from "@blueprintjs/table";
 import { Window, TitleBar, Text } from 'react-desktop/windows';
 import { Layout } from "crust"
+import {GlobalContext} from "global-context"
 import Draggable from 'react-draggable';
 import classNames from 'classnames'
 import { AppToaster } from "./toaster";
 import hotkeys from 'hotkeys-js';
 import io from 'socket.io-client';
+import events from 'events'
 require("babel-polyfill")
 
 //TODO: REMOVE AS ITS DEBUG
-stash.set('serverList', { "butter": { name: "Butter", ip: "localhost:3000" } });
+stash.set('serverList', { "butter": { name: "Butter", ip: "---------" },"local": { name: "local", ip: "localhost:3000" } });
+
+
 
 const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -25,22 +29,6 @@ import ServerList from './views/serverList.jsx'
 import ProjectViewer from './views/projectViewer.jsx'
 import Home from './views/home.jsx'
 import Loader from './views/loader.jsx'
-
-
-
-
-class RuntimeEnv {
-    constructor() {
-
-    }
-    connectToServer() {
-
-    }
-}
-
-const runtime = new RuntimeEnv()
-
-
 
 export default class App extends Component {
     constructor() {
@@ -59,20 +47,22 @@ export default class App extends Component {
 
         this.socketObject = null
 
+        var objectEvent = new events.EventEmitter();
         this.state = {
             isSpinner: true,
             isDebugOpen: false,
             showSignInDialog: false,
-            username: null,
-            password: null,
-            projects: [],
+            userName: null,
+            userPassword: null,
+            userSessionKey: null,
+            userAuthKey: null,
             serverProperties: {
                 ip: null,
                 name: null
             },
-            userData: {
-                roles: [],
-                name: null
+            globalProvider: {
+
+                globalEvent: objectEvent 
             }
         }
     }
@@ -105,6 +95,8 @@ export default class App extends Component {
                 self.setState({ isDebugOpen: true })
             }
         });
+
+        this.state.globalProvider.globalEvent.on("SOCKET:close", this.socketClose.bind(this) )
     }
     /**
      * updatePosition - Updats the Position of the views
@@ -208,47 +200,38 @@ export default class App extends Component {
             }
 
         })
-        //If the client can connect run this event
         socketObject.on('connect', function () {
+            self.state.globalProvider.globalEvent.emit("SOCKET:connected", {global: io, client: socketObject})
             socketObject.on('disconnect', function () {
                 console.log("")
-                socketObject.close()
-                self.socketDisconnect()
-                AppToaster.show({ icon: "info-sign", message: "Disconnected: Sign in from another device", intent: Intent.WARNING, });
+                self.socketClose()
+                AppToaster.show({ icon: "offline", message: "Disconnected", intent: Intent.DANGER});
                 self.socketObject = null
             })
-            socketObject.on("auth_sessionKey", (data) => {
-                self.setState({ showSignInDialog: true })
-            })
             socketObject.on("auth_vaildSignin", (data) => {
-                self.setState({ showSignInDialog: false })
+                self.setState({ showSignInDialog: false, user: data.uuid,})
                 self.moveTo(0, -1, 0)
                 socketObject.emit("core_projectList")
             })
             socketObject.on("auth_signInNewDevice", (data) => {
-
                 self.setState({ showSignInDialog: false })
                 self.moveTo(-1, 0, 0)
-                AppToaster.show({ icon: "disconnect", message: "Server Disconnected", intent: Intent.DANGER, timeout: 0 });
+                AppToaster.show({ icon: "info-sign", message: "Disconnected: Sign in from another device", intent: Intent.WARNING});
                 socketObject.close()
             })
-            socketObject.on("core_projectList", (data) => {
-                self.setState({ projects: data })
-            })
-            socketObject.on("core_userData", (data) => {
-                self.setState({ userData: data })
-            })
-
         })
-        this.setState({ serverProperties: { ip: ip, name: name } })
+        this.setState({ serverProperties: { ip: ip, name: name },  userName: null, userPassword: null, showSignInDialog: true})
         this.socketObject = socketObject
     }
     authSignIn() {
         if (this.socketObject != null) {
-            this.socketObject.emit("auth_signIn", { username: this.state.username, password: this.state.password })
+            this.socketObject.emit("auth_signIn", { username: this.state.userName, password: this.state.userPassword })
         }
     }
-    socketDisconnect() {
+    /**
+     * Closes the socket 
+     */
+    socketClose() {
         if (this.socketObject != null) {
             this.socketObject.close()
             this.moveTo(-1, 0, 0)
@@ -284,10 +267,10 @@ export default class App extends Component {
                             </Layout.Grid>
                             <Layout.Grid col>
                                 <Layout.Grid>
-                                    <InputGroup onInput={(event) => { this.setState({ username: event.target.value }) }} leftIcon="user" />
+                                    <InputGroup onInput={(event) => { this.setState({ userName: event.target.value }) }} leftIcon="user" />
                                 </Layout.Grid>
                                 <Layout.Grid style={{ paddingTop: 5 }}>
-                                    <InputGroup onInput={(event) => { this.setState({ password: event.target.value }) }} leftIcon="password" />
+                                    <InputGroup onInput={(event) => { this.setState({ userPassword: event.target.value }) }} leftIcon="password" />
                                 </Layout.Grid>
                             </Layout.Grid>
                         </Layout.Grid>
@@ -310,45 +293,47 @@ export default class App extends Component {
             <Window color="rgba(0, 153, 191, 0)" background="rgba(0, 153, 191, 1)">
                 <TitleBar background="#00acd7" title={<span className="observo-text">OBSERVO</span>} controls />
                 <Debug isOpen={this.state.isDebugOpen} />
-                <Layout.Grid canvas>
-                    <Layout.Grid row style={{ "justifyContent": "flex-start" }} ref="grid">
-                        <Layout.Grid col>
-                            <Layout.Grid width="888px" height="637px">
-                                <ServerList moveTo={this.moveTo.bind(this)} moveRight={this.moveRight.bind(this)} onDisconnect={() => { this.socketObject.close() }} onConnect={(ip, name) => { this.moveTo(-1, -1, 0); this.connectToServer(ip, name) }} />
+                <GlobalContext.Provider value={this.state.globalProvider}>
+                    <Layout.Grid canvas>
+                        <Layout.Grid row style={{ "justifyContent": "flex-start" }} ref="grid">
+                            <Layout.Grid col>
+                                <Layout.Grid width="888px" height="637px">
+                                    <ServerList moveTo={this.moveTo.bind(this)} moveRight={this.moveRight.bind(this)} onDisconnect={() => { this.socketObject.close() }} onConnect={(ip, name) => { this.moveTo(-1, -1, 0); this.connectToServer(ip, name) }} />
+                                </Layout.Grid>
+                                <Layout.Grid width="888px" height="637px">
+                                    <Loader isSpinner={this.state.isSpinner} />
+                                </Layout.Grid>
+                                <Layout.Grid width="888px" height="637px">
+                                    7
                             </Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                <Loader isSpinner={this.state.isSpinner} />
                             </Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                7
+                            <Layout.Grid>
+                                <Layout.Grid width="888px" height="637px">
+                                    <Home moveLeft={this.moveLeft.bind(this)} moveRight={this.moveRight.bind(this)} />
+                                </Layout.Grid>
+                                <Layout.Grid width="888px" height="637px">
+                                    <ProjectViewer serverProperties={this.state.serverProperties} moveTo={this.moveTo.bind(this)} />
+                                </Layout.Grid>
+                                <Layout.Grid width="888px" height="637px">
+                                    8
                             </Layout.Grid>
-                        </Layout.Grid>
-                        <Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                <Home moveLeft={this.moveLeft.bind(this)} moveRight={this.moveRight.bind(this)} />
                             </Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                <ProjectViewer projects={this.state.projects} userData={this.state.userData} serverProperties={this.state.serverProperties} socketDisconnect={this.socketDisconnect.bind(this)} />
+                            <Layout.Grid>
+                                <Layout.Grid width="888px" height="637px">
+                                    3
                             </Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                8
+                                <Layout.Grid width="888px" height="637px">
+                                    6
                             </Layout.Grid>
-                        </Layout.Grid>
-                        <Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                3
+                                <Layout.Grid width="888px" height="637px">
+                                    9
                             </Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                6
                             </Layout.Grid>
-                            <Layout.Grid width="888px" height="637px">
-                                9
-                            </Layout.Grid>
-                        </Layout.Grid>
 
 
+                        </Layout.Grid>
                     </Layout.Grid>
-                </Layout.Grid>
+                </GlobalContext.Provider>
                 {this.renderShowSignInDialog()}
             </Window>
         )

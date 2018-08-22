@@ -2,7 +2,7 @@
  * defined.js 
  * --------
  * A simple lib (7k, requires AMD loader) to define code as a API or Plugin and run it async without worrying about require issue
- * @author Brendan Fuller
+ * @author ImportProgram
  */
 
 
@@ -386,4 +386,4 @@ PluginManager.prototype.addDefined = function (id, path, allowRequire = null, cu
 PluginManager.prototype.onAppReady = function (callback) {m.appReady(callback)}
 PluginManager.prototype.mountAll = function () {m.checkMounting()}
 PluginManager.prototype.setDefinedID = function (id) {m.setDefinedID(id)}
-exports.PluginManager = PluginManager;
+module.exports= PluginManager;

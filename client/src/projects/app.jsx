@@ -1,54 +1,53 @@
-
 import React, { Component } from 'react'
-import { render } from 'react-dom'
-const notifier = require('node-notifier');
 import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Alignment, ButtonGroup, Menu, MenuItem, Classes } from "@blueprintjs/core";
-import { Cell, Column, Table } from "@blueprintjs/table";
 import { Window, TitleBar, Text } from 'react-desktop/windows';
 import { Layout } from "crust"
-import Draggable from 'react-draggable';
-
+import { GlobalContext } from "global-context"
 import { AppToaster } from "./toaster";
 import DocTabs from "./components/doctabs/doctabs.jsx"
-
+import Sidebar from "./components/sidebar.jsx"
+const managerLocal = require("import-window")
 import io from 'socket.io-client';
+import events from 'events'
 require("babel-polyfill")
 
-let plugin = require("./defined").PluginManager
-
-let manager = new plugin()
+let DefinedManager = require("./defined")
 
 
 
 export default class App extends Component {
     constructor() {
         super();
-        this.newTab = () => { }
-        /*Sidebar Stuff*/
 
-        /*this.state.nodes*/
-
+        var objectEvent = new events.EventEmitter();
         this.state = {
+            test: null,
             tabs: [],
-            code: "console.log('hello');",
-            bob: () => { return null}
+            globalProvider: {
+                globalEvent: objectEvent
+            }
         }
-        this.socket = io('http://localhost:3000')
-        let plugin = manager.addDefined("PLUGINS", "./plugins", false, [])
-        let api = manager.addDefined("API", "./api", true, ["CLIENT"])  
-        manager.appReady(() => {
-          
+        let manager = new DefinedManager()
+        manager.setDefinedID("Observo") //Custom NAMESPACE
+        let api = manager.addDefined("API", "./api", true, ["CLIENT"])
+        this.plugin = manager.addDefined("PLUGINS", "./plugins", false, [])
+        let self = this
+        manager.onAppReady(() => {
+            console.log(api)
+            self.setState({ test: api.page.services.API.getPage("example") })
         })
     }
 
-    //DocTabs
     addTab() {
         let name = this.state.text
         let tabs = this.state.tabs
         tabs.push({ title: name })
         this.setState({ tabs: tabs })
     }
-    docTabChange(tabs) {
+    docTabChange(tabs, selected) {
+        console.log("CHANGE")
+        console.log(tabs)
+        console.log(selected)
         this.setState({ tabs: tabs })
     }
     closeTab(name) {
@@ -58,14 +57,8 @@ export default class App extends Component {
         console.log(name)
     }
 
-    // Button and Monoaco
-    onChange(newValue, e) {
-        if (newValue != this.state.code) {
-            this.socket.emit('code', newValue);
-        }
-
-    }    //reders the component
     btnClick() {
+        /*
         notifier.notify(
             {
               title: 'Observo',
@@ -76,45 +69,29 @@ export default class App extends Component {
             function(err, response) {
               // Response is response from notification
             }
-          );
+          );*/
         AppToaster.show({ message: "Toasted." });
     }
 
     updateText(event) {
         this.setState({ text: event.target.value })
     }
-    editorDidMount(editor, monaco) {
-        this.editor = editor
-        console.log('editorDidMount', editor);
-        editor.onDidChangeCursorSelection((data) => {
-            console.log(data)
-            if (data.selection.endColumn == data.selection.startColumn) {
-                if (data.selection != this.state.selection) {
-                    //this.socket.emit('selection', data);
-                }
-            }
-            if (data.reason >= 3) {
-                this.socket.emit('selection', data);
-            }
-
-        })
-        var decorations = editor.deltaDecorations([], [
-            //line, startColumn, emdline, endColumn
-            { range: new monaco.Range(1, 1, 1, 10), options: { inlineClassName: 'user-selection' } }
-        ]);
-    }
 
     componentDidMount() {
-        this.socket.on('code', (data) => {
-            this.setState({ code: data })
-        });
-        this.socket.on('selection', (data) => {
-            this.setState({ selection: data.selection })
-        });
+        let args = managerLocal.parseArgs()
+        let socketObject = io.connect(`http://${args.ip}/core/`)
+        socketObject.on("connect", () => {
+            this.state.globalProvider.globalEvent.emit("SOCKET:connected", {global: io, client: socketObject})
+            socketObject.emit("auth_signIn", { authKey: args.authKey })
+            socketObject.on("auth_vaildSignin", (data) => {
+                console.log("VAILD")
+                console.log(args.project)
+                socketObject.emit("core_getProject", {project: args.project})
+            })
+            
+        })
     }
-    selection(data) {
-        console.log(data)
-    }
+
     render(props, state) {
         const options = {
             selectOnLineNumbers: true
@@ -122,42 +99,38 @@ export default class App extends Component {
         return (
             <Window color="rgba(0, 153, 191, 0)" background="rgba(0, 153, 191, 1)">
                 <TitleBar background="#00acd7" title={<span className="observo-text">OBSERVO</span>} controls />
+                <GlobalContext.Provider value={this.state.globalProvider}>
+                    <Layout.Grid canvas>
+                        <Layout.Grid row>
+                            {/*Sidebar*/}
+                            <Sidebar />
+                            {/*User Bar*/}
+                            <Layout.Grid col>
+                                <Layout.Grid row height="50px">
 
-                <Layout.Grid canvas>
-                    <Layout.Grid row>
-                        {/*Sidebar*/}
-                        <Layout.Grid width="200px" height="100%" background="gray">
-
-                            <Button onClick={this.btnClick} text="Procure toast Maybe" />
-                            {this.state.bob()}
-                        </Layout.Grid>
-
-                        {/*User Bar*/}
-                        <Layout.Grid col>
-                            <Layout.Grid row height="50px">
-
-                                {/*Doctabs*/}
-                                <Layout.Grid background="lightblue">
-                                    <DocTabs key="tabs" tabs={this.state.tabs} onChange={this.docTabChange.bind(this)} onSelect={this.onSelected.bind(this) } onClose={this.closeTab.bind()}/>
+                                    {/*Doctabs*/}
+                                    <Layout.Grid background="lightblue">
+                                        <DocTabs key="tabs" tabs={this.state.tabs} onChange={this.docTabChange.bind(this)} onSelect={this.onSelected.bind(this)} onClose={this.closeTab.bind()} />
+                                    </Layout.Grid>
+                                    <Layout.Grid width="120px">
+                                        <Navbar>
+                                            <Navbar.Group align={Alignment.LEFT}>
+                                                <Button className="pt-minimal" icon="user" />
+                                                <Button className="pt-minimal" icon="notifications" />
+                                                <Button className="pt-minimal" icon="cog" />
+                                            </Navbar.Group>
+                                        </Navbar>
+                                    </Layout.Grid>
                                 </Layout.Grid>
-                                <Layout.Grid width="120px">
-                                    <Navbar>
-                                        <Navbar.Group align={Alignment.LEFT}>
-                                            <Button className="pt-minimal" icon="user" />
-                                            <Button className="pt-minimal" icon="notifications" />
-                                            <Button className="pt-minimal" icon="cog" />
-                                        </Navbar.Group>
-                                    </Navbar>
+                                <Layout.Grid>
+                                    <Button onClick={this.addTab.bind(this)} style={{ width: '100px' }}>+</Button>
+                                    <input className="pt-input" type="text" placeholder="Text input" onChange={this.updateText.bind(this)} dir="auto" />
+                                    {this.state.test}
                                 </Layout.Grid>
-                            </Layout.Grid>
-                            <Layout.Grid>
-                                <Button onClick={this.addTab.bind(this)} style={{ width: '100px' }}>+</Button>
-                                <input className="pt-input" type="text" placeholder="Text input" onChange={this.updateText.bind(this)} dir="auto" />
-                                
                             </Layout.Grid>
                         </Layout.Grid>
                     </Layout.Grid>
-                </Layout.Grid>
+                </GlobalContext.Provider>
             </Window>
 
         );

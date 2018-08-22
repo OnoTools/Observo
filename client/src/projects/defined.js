@@ -1,49 +1,97 @@
-/** Defined 
- *  An API and plugin loading system designed for requireless projects
- *  
- *  
+/** 
+ * defined.js 
+ * --------
+ * A simple lib (7k, requires AMD loader) to define code as a API or Plugin and run it async without worrying about require issue
+ * @author ImportProgram
  */
+
 
 require("amd-loader");
 var { transform } = require("babel-core");
 var EventEmitter = require('events').EventEmitter;
-var React = require('react')
+const startTime = process.hrtime()
 class Logging {
     constructor() {
-        this.chrome = false
-        this.prefix = ` ${this.colorText("magenta", "DML")} |`
+        this.prefix = this.color("$3 Observo $f|")
     }
-    colorText(color, text) {
-        return text;
-        switch (color) {
-            case 'black':
-                text = '\x1B[30m' + text; break;
-            case 'red':
-                text = '\x1B[31m' + text; break;
-            case 'green':
-                text = '\x1B[32m' + text; break;
-            case 'yellow':
-                text = '\x1B[33m' + text; break;
-            case 'blue':
-                text = '\x1B[34m' + text; break;
-            case 'magenta':
-                text = '\x1B[35m' + text; break;
-            case 'cyan':
-                text = '\x1B[36m' + text; break;
-            case 'white':
-                text = '\x1B[37m' + text; break;
-            default:
-                text = color + text; break;
+    /**
+     * Color - Colors text using $ as the break point followed by a color code
+     * @param {*} data 
+     */
+    color(data) {
+        let paint = (color, text) => {
+            switch (color) {
+                case '0'://black
+                    text = '\x1B[30m' + text; break;
+                case '4': //red
+                    text = '\x1B[31m' + text; break;
+                case '2': //green
+                    text = '\x1B[32m' + text; break;
+                case 'E': //yellow
+                    text = '\x1B[33m' + text; break;
+                case '1': //blue
+                    text = '\x1B[34m' + text; break;
+                case 'D': //magenta
+                    text = '\x1B[35m' + text; break;
+                case '3': //cyan
+                    text = '\x1B[36m' + text; break;
+                case 'f': //white
+                    text = '\x1B[37m' + text; break;
+                default:
+                    text = color + text; break;
+            }
+            return text + '\x1B[39m' + '\x1b[0m';
         }
-        return text + '\x1B[39m' + '\x1b[0m';
-
-    };
-    log(message, color = "green") {
-        message = `${this.prefix} ${this.colorText(color, message)}`
+        let output = ""
+        let painting = false
+        let grabColor = 0
+        let color = ""
+        let items = []
+        //Loop throw the string
+        for (var i = 0; i < data.length; i++) {
+            //If DOLLAR SIGN is found, stop adding CHARACTER to OUTPUT string
+            if (data[i] == "$") {
+                if (painting) {
+                    //If paiting is true either here or down below, add the output to an array and clear output, also check for no output
+                    if (output != "") {
+                        items.push(paint(color, output))
+                        painting = false
+                        output = ""
+                    }
+                }
+                //This will enable the color grabber
+                grabColor = true
+                color = ""
+            }
+            //When this is enabled it will let the loop go over TWO CHARACTERS to grab color code (hi$a)
+            if (grabColor) {
+                color = color + data[i]
+                if (color.length == 2) {
+                    grabColor = false
+                    painting = true
+                    //Remove the dollar sign cause its not needed, make PAITING TRUE
+                    color = color.replace("$", "")
+                }
+            } else {
+                output = output + data[i]
+            }
+        }
+        //If paiting is true either here or above add the output to an array and clear output
+        if (painting) {
+            items.push(paint(color, output))
+        }
+        output = ""
+        for (let i in items) {
+            output = output + items[i]
+        }
+        return output
+    }
+    log(message) {
+        message = `${this.prefix} ${this.color(`$2${message}`)}`
         console.log(message)
     }
     info(message) {
-        message = `${this.prefix} ${this.colorText("cyan", message)}`
+        message = `${this.prefix} ${this.color(`$3${message}`)}`
         console.log(message)
 
     }
@@ -52,8 +100,13 @@ class Logging {
         console.log(message)
     }
 }
-
 const log = new Logging()
+/**
+ * Gets a list of files in a folder, can be infinite too.
+ * - In this particular code, its package.json though
+ * @param {String} dir 
+ * @param {Recursive String} filelist 
+ */
 const getPackages = function (dir, filelist) {
     var path = path || require('path');
     var fs = fs || require('fs'),
@@ -71,59 +124,74 @@ const getPackages = function (dir, filelist) {
     });
     return filelist;
 };
+//Splits at a location, 
 const splitAt = index => x => [x.slice(0, index), x.slice(index)]
 
-
-
-
-// Single Instance Manager
-
-var self
+var self //Global this of the class below
 class Manager extends EventEmitter {
     constructor() {
         super()
         self = this
-        self.id = "Observo"
+        self.id = "defined"
         this.defined = {}
         this.pass = false
     }
+    /**
+     * SetDefinedID - Sets the DEFINED namespace used in a plugin/api
+     * @param {*} id 
+     */
+    setDefinedID(id) {
+        this.id = id
+    }
+    /**
+     * AppReady - When the app is ready, called when all modules have been loaded
+     * @param {Function} callback 
+     */
     appReady(callback) {
         this.on('app-ready', () => {
-            callback()
+            log.info("Succesfully loaded in: $f" +  ((process.hrtime(startTime)[0] * 1000) + (process.hrtime(startTime)[1] / 1000000)).toFixed(3) + "ms")
+            callback(log)
         });
     }
+    /**
+     * AddDefined - Add a "defined" directory to load as a namespace
+     * @param {String} section 
+     * @param {String} path 
+     * @param {Boolean} allowRequire 
+     * @param {ArrayList} customRegisters 
+     */
     addDefined(section, path, allowRequire, customRegisters) {
         section = section.toLowerCase()
         if (self.defined[section] == null) {
-            let json = {}
             self.defined[section] = {}
             self.defined[section].__customRegisters = customRegisters
-
+            //Loop through directory given (path)
             let root = require("path").join(__dirname, path)
             let apis = getPackages(root)
+            //For loop all pacakges found
             for (let file in apis) {
                 let f = apis[file]
+                //Use AMD-LOADER for async module loading (faster)
                 define(function (require, exports, module) {
-                    f = f.replace(/\\/g, "/");
-                    console.log(f)
-                    json = require(f)
-
-
+                    f = f.replace(/\\/g, "/");            
+                    let json = require(f) //Load the package.json
                     if (json.name && json.version) {
                         if (!self.defined[section][json.name]) {
+                            //Creat the new module
                             self.defined[section][json.name] = {}
                             self.defined[section][json.name].package = json
                             self.defined[section][json.name].registered = false
                             self.defined[section][json.name].services = {}
-                            log.log("NEW MODULE: " + json.name)
+                            log.log("$DNEW MODULE: " + json.name)
                             let dir = splitAt(f.lastIndexOf("/"))(f)[0]
                             if (json.main) {
 
                                 let main = dir + "/" + json.main
-                                console.log(main)
+                                //Load the module (but do it as TEXT not as a require)
                                 require('fs').readFile(main, 'utf8', (err, data) => {
                                     if (err) { console.log("[Defined] Cannot load " + json.main + "!") }
-                                    self.run(data, section, json.name, allowRequire)
+                                    //Now run the code
+                                    self.run(data, section, json.name, allowRequire) 
                                 });
                             } else {
                                 console.log("[Loader] Has no 'main' file?")
@@ -132,28 +200,36 @@ class Manager extends EventEmitter {
                     }
 
                 });
-
+                
             }
             return self.defined[section]
         }
-
     }
+    /**
+     * Run - runs code from the module, with some magic
+     * @param {String} code 
+     * @param {String} section 
+     * @param {String} name 
+     * @param {Boolean} allowRequire 
+     */
     run(code, section, name, allowRequire) {
+        //Custom Console to pass onto a MODULE
         let customConsole = {
             log: (message) => {
-                log.log(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.colorText("white", message)}`)
+                log.log(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$f${message}`)}`)
             },
             info: (message) => {
-                log.info(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.colorText("white", message)}`)
+                log.info(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$3${message}`)}`)
             },
             error: (message) => {
-                log.error(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.colorText("white", message)}`)
+                log.error(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$4${message}`)}`)
             }
         }
         let customRequire = (module) => { customConsole.error(`REQURING of '${module}' is not allowed`) }
         if (allowRequire) {
             customRequire = require
         }
+        //ALL BELOW ARE DEFINED VARAIBLES WHICH NEED CLEARING (setting to null)
         var indexedDB = null;
         var location = null;
         var navigator = null;
@@ -185,60 +261,77 @@ class Manager extends EventEmitter {
         let __filename = null
         let run = null
 
+        //Defined Object
         let defined = {
+            //Register a MODULE
             register: (id, services) => {
                 this.defined[section][name].services = services
                 this.defined[section][name].registered = true
+              
                 this.checkMounting()
             },
+            //BUILD A CUSTOM MOUNT
             onCustomMount: (callback) => {
                 this.on('mount-custom', () => {
                     let data = this.getCustomServices(section, name)
                     callback(data)
                 });
             },
+            //BUILT A NORMAL MOUNT (with callback naming)
             onMount: (callback) => {
+                const nameFunction = function (fn, name) {
+                    return Object.defineProperty(fn, 'name', {value:  name, configurable: true});
+                  };
                 this.on('mount-imports', () => {
                     let data = this.getGlobalServices(section, name)
+                    callback = nameFunction(callback, name)
                     callback(data)
                 });
             },
+            //GET PLUGINS PACKAGE (can be use for settings, etc)
             getPackage: () => {
                 return this.defined[id][name].package
             }
         }
+        //Grab the GLOBAL ID (whatever has be set), and use it as the MODULE NAMSPACE (keep in mind the word "defined" will still work anywhere)
         let id = this.id
-        let newCode = `module.exports = function(require, console, ${id}, log, React) { ${code} }`;
+        let newCode = `module.exports = function(require, console, ${id}, log) { ${code} }`;
         self = null
         newCode = transform(newCode, {
             "presets": ["env", "react"],
             "plugins": ["transform-react-jsx"]
         }).code
         let launchCode = eval(newCode);
-
-        /**
-         * Calls code through eval(code)
-         */
-        launchCode(customRequire, console, defined, null, React);
+        //Run the code
+        launchCode(customRequire, console, defined, null);
     }
+    /**
+     * CheckMounting - Checks to see if all plugins have mounted registers
+     */
     checkMounting() {
         let pass = true
-        //console.log(JSON.stringify(this))
         for (let section in this.defined) {
             for (let mod in this.defined[section]) {
-                if (this.defined[section][mod].registered == false) {
-                    pass = false
-                }
+                try {
+                    if (this.defined[section][mod].registered == false) {
+                        pass = false
+                    }
+                } catch (e) {}
             }
         }
         if (pass && !this.pass) {
             this.pass = true
-            log.log("MOUNTING MODULES")
-            this.emit('mount-imports');
-            this.emit('mount-custom');
-            this.emit('app-ready')
+            this.emit('mount-imports'); //Mount all GLOBAL imports
+            this.emit('mount-custom'); //Mount any CUSTOM imports
+            this.emit('app-ready') //Mount the AppReady event.
         }
     }
+    /**
+     * GetGlobalServices - Gets all services under then GLOBAL namespace when registering an module.
+     * @param {String} section 
+     * @param {String} name 
+     * @return {ArrayList} services
+     */
     getGlobalServices(section, name) {
         if (this.defined[section][name].package.consumes) {
             let consumes = this.defined[section][name].package.consumes
@@ -248,9 +341,11 @@ class Manager extends EventEmitter {
                 let _section = mod[0]
                 let _name = mod[1]
                 if (this.defined[_section]) {
-                    imports[_section] = {}
+                    if (imports[_section] == null) {
+                        imports[_section] = {}
+                    }
                     if (this.defined[_section][_name]) {
-                        imports[_section][_name] = this.defined[_section][_name].services.global
+                        imports[_section][_name] = this.defined[_section][_name].services.GLOBAL
                     }
                 }
             }
@@ -258,24 +353,28 @@ class Manager extends EventEmitter {
         }
         return null
     }
+    /**
+     * GetCustomServices - Gets all custom services that are specified under a namespace when registering an module.
+     * @param {String} section 
+     * @param {String} name 
+     * @return {ArrayList} services
+     */
     getCustomServices(section, name) {
-        if (this.defined[section][name].package.consumes) {
-            let customImports = {}
-            let customRegisters = this.defined[section].__customRegisters
-            for (let _section in this.defined) {
-                customImports[_section] = {}
+        if (this.defined[section][name].package.consumes) { //Check if the module consumes, defined in package.json
+            let customImports = {} //Object of imports
+            let customRegisters = this.defined[section].__customRegisters //Check when registers namespaces it needs
+            for (let _section in this.defined) { //Loop them
+                customImports[_section] = {} //Get object of module 
                 for (let _name in this.defined[_section]) {
-                    if (_name != "__customRegisters") {
+                    if (_name != "__customRegisters") { //Check to see if __customRegisters was for loop, if so ignore it
                         customImports[_section][_name] = {}
                         for (let register in customRegisters) {
                             let id = customRegisters[register]
                             try {
-
                                 customImports[_section][_name][id] = this.defined[_section][_name].services[id]
                             } catch (e) {
                                 console.log("[DML] Doesn't Support Custom Register (" + _section + ":" + _name + ")")
                             }
-
                         }
                     }
 
@@ -289,15 +388,9 @@ class Manager extends EventEmitter {
 
 let m = new Manager()
 
-function PluginManager() {
-
-}
-
-PluginManager.prototype.addDefined = function (id, path, allowRequire = null, customRegisters) {
-    return m.addDefined.call(this, id, path, allowRequire, customRegisters);
-}
-PluginManager.prototype.appReady = function (callback) {
-    m.appReady(callback)
-}
-
-exports.PluginManager = PluginManager;
+function PluginManager() {}
+PluginManager.prototype.addDefined = function (id, path, allowRequire = null, customRegisters) {return m.addDefined.call(this, id, path, allowRequire, customRegisters);}
+PluginManager.prototype.onAppReady = function (callback) {m.appReady(callback)}
+PluginManager.prototype.mountAll = function () {m.checkMounting()}
+PluginManager.prototype.setDefinedID = function (id) {m.setDefinedID(id)}
+module.exports= PluginManager;

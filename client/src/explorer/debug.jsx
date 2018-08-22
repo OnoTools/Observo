@@ -3,6 +3,7 @@ const notifier = require('node-notifier');
 import { Button, Intent, Tooltip, Icon, Classes, Portal } from "@blueprintjs/core";
 import { Layout } from "crust"
 import Draggable from 'react-draggable';
+import {GlobalContext} from "global-context"
 import os from 'os'
 require("babel-polyfill")
 

@@ -2,11 +2,11 @@ require("amd-loader");
 var l=require('events').EventEmitter;
 const sT=process.hrtime()
 class Logging {
-    constructor() {this.prefix=this.color('$3 Observo $f|')}
+    constructor() {this.p=this.color('$3 Observo $f|')}
     color(a){let b=(j, k) => {return k='0' === j ? '\x1B[30m' + k : '4' === j ? '\x1B[31m' + k : '2' === j ? '\x1B[32m' + k : 'E' === j ? '\x1B[33m' + k : '1' === j ? '\x1B[34m' + k : 'D' === j ? '\x1B[35m' + k : '3' === j ? '\x1B[36m' + k : 'f' === j ? '\x1B[37m' + k : j + k, k + '\x1B[39m\x1B[0m'},c='',d=!1,e=0,f='',g=[];for (var h=0; h < a.length; h++) '$' == a[h] && (d && '' != c && (g.push(b(f, c)), d=!1, c=''), e=!0, f=''), e ? (f += a[h], 2 == f.length && (e=!1, d=!0, f=f.replace('$', ''))) : c += a[h];for (let j in d && g.push(b(f, c)), c='', g) c += g[j];return c;}
-    log(a){a=`${this.prefix} ${this.color(`$2${a}`)}`, console.log(a)}
-    info(a){a=`${this.prefix} ${this.color(`$3${a}`)}`, console.log(a) }
-    error(a){a=`${this.prefix} ${this.color(`$4${a}`)}`, console.log(a)}
+    log(a){a=`${this.p} ${this.color(`$2${a}`)}`, console.log(a)}
+    info(a){a=`${this.p} ${this.color(`$3${a}`)}`, console.log(a) }
+    error(a){a=`${this.p} ${this.color(`$4${a}`)}`, console.log(a)}
 }
 const log=new Logging()
 const getPackages=function(a,b){var c=c||require('path'),d=d||require('fs'),e=d.readdirSync(a);return b=b||[],e.forEach(function(f){d.statSync(c.join(a,f)).isDirectory()?b=getPackages(c.join(a,f),b):'package.json'==f&&b.push(c.join(a,f))}),b};
