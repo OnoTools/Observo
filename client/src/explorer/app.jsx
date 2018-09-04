@@ -212,6 +212,8 @@ export default class App extends Component {
                 self.setState({ showSignInDialog: false, user: data.uuid,})
                 self.moveTo(0, -1, 0)
                 socketObject.emit("core_projectList")
+                socketObject.emit("core_pluginList")
+                self.state.globalProvider.globalEvent.emit("AUTH:vaild")
             })
             socketObject.on("auth_signInNewDevice", (data) => {
                 self.setState({ showSignInDialog: false })

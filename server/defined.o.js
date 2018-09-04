@@ -287,9 +287,19 @@ class Manager extends EventEmitter {
                     callback(data)
                 });
             },
-            //GET PLUGINS PACKAGE (can be use for settings, etc)
-            getPackage: () => {
-                return this.defined[id][name].package
+            //GET ALL DEFINED PACKAGE (can be use for settings, etc)
+            getDefined: () => {
+                let local = {}
+                for (let _section in this.defined) { //Loop them
+                    local[_section] = {} //Get object of module 
+                    for (let _name in this.defined[_section]) {
+                        if (_name != "__customRegisters") { //Check to see if __customRegisters was for loop, if so ignore it
+                            local[_section][_name] = {}
+                            local[_section][_name].package = this.defined[_section][_name].package
+                        }
+                    }
+                }
+                return local
             }
         }
         //Grab the GLOBAL ID (whatever has be set), and use it as the MODULE NAMSPACE (keep in mind the word "defined" will still work anywhere)

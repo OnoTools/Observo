@@ -2,6 +2,6 @@
     "name": "database",
     "version": "0.0.1",
     "main": "database.js",
-    "private": true,
+    "author": "OnoTools",
     "consumes": []
 }

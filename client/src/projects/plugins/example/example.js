@@ -1,6 +1,10 @@
 class Example extends React.Component {
   render() {
-    return <p>Hello this is a react example</p>
+     return React.createElement(
+      "p",
+      null,
+      "Hello this is a react example"
+    );
   }
 }
 
@@ -9,7 +13,7 @@ class Example extends React.Component {
 Observo.onMount((imports) => {
   console.log("MOUNTED")
   console.log(imports)
-  imports.api.page.register(<Example />)
+  imports.api.page.register(React.createElement(Example, null))
 })
 Observo.register(null, {
   GLOBAL: {},

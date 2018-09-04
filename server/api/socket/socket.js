@@ -21,10 +21,8 @@ Observo.onCustomMount((imports) => {
             client.disconnect()
         })
         client.on("auth_signIn", function (data) {
-            console.log(JSON.stringify(data))
             if (data.authKey != null) {
                 database.signInViaKey(data.authKey, sessionKey, (response) => {
-                    console.log(JSON.stringify(response))
                     if (response != null) {
                         if (connectedClients[response.uuid] != null) {
                             connectedClients[response.uuid].emit("auth_signInNewDevice")
@@ -50,7 +48,6 @@ Observo.onCustomMount((imports) => {
                             //socket.emit("vaild_signUp", { username: username })
                         } else {
                             database.signIn(username, password, sessionKey, (response) => {
-                                console.log(JSON.stringify(response))
                                 if (response != null) {
                                     if (connectedClients[response.uuid] != null) {
                                         connectedClients[response.uuid].emit("auth_signInNewDevice")
@@ -89,12 +86,8 @@ Observo.onCustomMount((imports) => {
                     client.emit("core_projectList", data)
                 })
                 database.getUser(userUUID, (data) => {
-                    console.log(JSON.stringify(data))
                     let userRoles = JSON.parse(data.role)
-
                     database.getRoles((roles) => {
-                        console.log("-----")
-                        console.log(JSON.stringify(roles))
                         let roleData = []
                         for (let i in userRoles) {
                             let userRole = userRoles[i]
@@ -110,7 +103,11 @@ Observo.onCustomMount((imports) => {
                 })
             }
         })
-
+        client.on("core_pluginList", (data) => {
+            if (vaildAuth) {
+                client.emit("core_pluginList", Observo.getDefined()["plugins"])
+            }
+        })
     })
 })
 
