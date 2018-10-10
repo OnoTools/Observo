@@ -6,7 +6,7 @@ import hotkeys from 'hotkeys-js';
 import io from 'socket.io-client';
 import { GlobalContext } from "global-context"
 import moment from 'moment';
-import {remote} from 'electron'
+import { remote } from 'electron'
 const { BrowserWindow } = remote
 const managerLocal = require("import-window")
 const managerRemote = remote.require("import-window")
@@ -17,7 +17,7 @@ class ProjectViewer extends Component {
     constructor() {
         super()
         this.state = {
-            alertDisconnect: false,       
+            alertDisconnect: false,
             user: {
                 roles: [],
                 name: null
@@ -32,16 +32,19 @@ class ProjectViewer extends Component {
     }
     componentDidMount() {
         let self = this
-        this.props.globalEvents.on("SOCKET:connected", (socket) =>{
+        this.props.globalEvents.on("SOCKET:connected", (socket) => {
             socket.client.on("core_userData", (data) => {
                 self.setState({ user: data })
             })
             socket.client.on("core_projectList", (data) => {
-                self.setState({ projects: data})
+                self.setState({ projects: data })
             })
             socket.client.on("auth_vaildSignin", (data) => {
-                self.setState({auth: data})
-                
+                self.setState({ auth: data })
+            })
+            socket.client.on("core_pluginList", (data) => {
+                console.log(data)
+                self.setState({ pluginList: data })
             })
         })
     }
@@ -63,7 +66,7 @@ class ProjectViewer extends Component {
     }
     openProject(project) {
         console.log("new window")
-        let args = managerLocal.parseArgs() 
+        let args = managerLocal.parseArgs()
         console.log(args)
         let mainWin = managerRemote.createWindow({
             show: false,
@@ -72,21 +75,21 @@ class ProjectViewer extends Component {
             frame: false,
             color: "#000",
             webPreferences: {
-              zoomFactor: 0.9,
+                zoomFactor: 0.9,
             }
-          })
-          //Intead of __dirname we used '.getDir()' 
-          mainWin.setURL(managerRemote.getDir(), "./src/projects/index.html", {
+        })
+        //Intead of __dirname we used '.getDir()' 
+        mainWin.setURL(managerRemote.getDir(), "./src/projects/index.html", {
             ip: this.props.serverProperties.ip,
             authKey: this.state.auth.authKey,
             uuid: this.state.auth.uuid,
             project: project,
-          })
-          mainWin.win.setMinimumSize(800, 700);
-            mainWin.win.webContents.on('did-finish-load', () => {
+        })
+        mainWin.win.setMinimumSize(800, 700);
+        mainWin.win.webContents.on('did-finish-load', () => {
             mainWin.win.show()
             //win.close();
-          })
+        })
     }
     /**
      * RenderServers - Renders all servers listed on the sidebar
@@ -98,7 +101,7 @@ class ProjectViewer extends Component {
                 let project = this.state.projects[p]
                 console.log(project)
                 items.push(
-                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onContextMenu={this.showContext.bind(true)}  onClick={this.openProject.bind(this, project.name)}className="box">
+                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onContextMenu={this.showContext.bind(true)} onClick={this.openProject.bind(this, project.name)} className="box">
                         <p>{project.name}</p>
                         <p>Last Edited: {moment(new Date(project.lastEdited.replace(/\s/g, "T")).toUTCString()).fromNow()}</p>
                     </Layout.Grid>
@@ -107,6 +110,22 @@ class ProjectViewer extends Component {
             return items
         }
         return null
+    }
+    renderServerPlugins() {
+        if (this.state.pluginList != null) {
+            let items = []
+            for (let p in this.state.pluginList) {
+                let plugin = this.state.pluginList[p].package
+                items.push(
+                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} className="box">
+                        <p>{plugin.name}</p>
+                        <p>{plugin.version}</p>
+                    </Layout.Grid>
+                )
+            }
+            return items
+        }
+        return null 
     }
     /**
      * Renders ALERT about disconnecting from the server
@@ -138,29 +157,41 @@ class ProjectViewer extends Component {
             <Layout.Grid col>
                 <Layout.Grid style={{ alignSelf: 'stretch', flexGrow: 2 }}>
                     <Layout.Grid col>
-                        <Layout.Grid row style={{ flex: '0 0 auto', height: 350 }}>
+                        <Layout.Grid row style={{ flex: '0 0 auto', height: 120 }}>
                             <Layout.Grid>
-                                <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10 }}>
+                                <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: 100 }}>
                                     <h2>{this.props.serverProperties.name}</h2>
                                     <p>{this.props.serverProperties.ip}</p>
                                 </Card>
                             </Layout.Grid>
                             <Layout.Grid>
-                                <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: 108 }}>
+                                <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: 100 }}>
                                     <Layout.Grid row>
                                         <Layout.Grid>
                                             <h2>{this.state.user.name}</h2>
                                         </Layout.Grid>
-                                        <Layout.Grid col>
+                                        <Layout.Grid col style={{ overflowY: "auto", overflow: "overlay" }}>
                                             {renderRoles(this.state.user.roles)}
                                         </Layout.Grid>
                                     </Layout.Grid>
                                 </Card>
                             </Layout.Grid>
                         </Layout.Grid>
-                        <Layout.Grid height="230px">
+                        <Layout.Grid row style={{ flex: '0 0 auto', height: 444 }}>
+                            <Layout.Grid>
+                                <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: '100%' }}>
 
+                                </Card>
+                            </Layout.Grid>
+                            <Layout.Grid>
+                                <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: '100%' }}>
+                                    <Layout.Grid col width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} className="observo--sidebar">
+                                        {this.renderServerPlugins()}
+                                    </Layout.Grid>
+                                </Card>
+                            </Layout.Grid>
                         </Layout.Grid>
+                        <Layout.Grid row height="20px" />
                     </Layout.Grid>
                 </Layout.Grid>
                 <Layout.Grid row style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
@@ -186,6 +217,6 @@ class ProjectViewer extends Component {
 
 export default props => (
     <GlobalContext.Consumer>
-      {context => <ProjectViewer {...props}  globalEvents={context.globalEvent} />}
+        {context => <ProjectViewer {...props} globalEvents={context.globalEvent} />}
     </GlobalContext.Consumer>
-  );
+);

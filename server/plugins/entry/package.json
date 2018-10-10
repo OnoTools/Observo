@@ -1,0 +1,10 @@
+{
+    "name": "entry",
+    "version": "1.0.0",
+    "main": "entry.js",
+    "author": "ImportProgram",
+    "settings:": {
+        "dynamic": "true"
+    },
+    "consumes": [""]
+}

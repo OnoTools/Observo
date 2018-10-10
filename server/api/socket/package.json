@@ -2,6 +2,6 @@
     "name": "socket",
     "version": "0.0.1",
     "main": "socket.js",
-    "private": true,
+    "author": "OnoTools",
     "consumes": ["api:database"]
 }

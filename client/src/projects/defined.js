@@ -7,7 +7,7 @@
 
 
 require("amd-loader");
-var { transform } = require("babel-core");
+//var { transform } = require("babel-core");
 var EventEmitter = require('events').EventEmitter;
 const startTime = process.hrtime()
 class Logging {
@@ -22,25 +22,25 @@ class Logging {
         let paint = (color, text) => {
             switch (color) {
                 case '0'://black
-                    text = '\x1B[30m' + text; break;
+                    text = '' + text; break;
                 case '4': //red
-                    text = '\x1B[31m' + text; break;
+                    text = '' + text; break;
                 case '2': //green
-                    text = '\x1B[32m' + text; break;
+                    text = '' + text; break;
                 case 'E': //yellow
-                    text = '\x1B[33m' + text; break;
+                    text = '' + text; break;
                 case '1': //blue
-                    text = '\x1B[34m' + text; break;
+                    text = '' + text; break;
                 case 'D': //magenta
-                    text = '\x1B[35m' + text; break;
+                    text = '' + text; break;
                 case '3': //cyan
-                    text = '\x1B[36m' + text; break;
+                    text = '' + text; break;
                 case 'f': //white
-                    text = '\x1B[37m' + text; break;
+                    text = '' + text; break;
                 default:
                     text = color + text; break;
             }
-            return text + '\x1B[39m' + '\x1b[0m';
+            return text
         }
         let output = ""
         let painting = false
@@ -149,7 +149,7 @@ class Manager extends EventEmitter {
      */
     appReady(callback) {
         this.on('app-ready', () => {
-            log.info("Succesfully loaded in: $f" +  ((process.hrtime(startTime)[0] * 1000) + (process.hrtime(startTime)[1] / 1000000)).toFixed(3) + "ms")
+            log.info("Succesfully loaded in: $f" + ((process.hrtime(startTime)[0] * 1000) + (process.hrtime(startTime)[1] / 1000000)).toFixed(3) + "ms")
             callback(log)
         });
     }
@@ -173,7 +173,7 @@ class Manager extends EventEmitter {
                 let f = apis[file]
                 //Use AMD-LOADER for async module loading (faster)
                 define(function (require, exports, module) {
-                    f = f.replace(/\\/g, "/");            
+                    f = f.replace(/\\/g, "/");
                     let json = require(f) //Load the package.json
                     if (json.name && json.version) {
                         if (!self.defined[section][json.name]) {
@@ -191,7 +191,7 @@ class Manager extends EventEmitter {
                                 require('fs').readFile(main, 'utf8', (err, data) => {
                                     if (err) { console.log("[Defined] Cannot load " + json.main + "!") }
                                     //Now run the code
-                                    self.run(data, section, json.name, allowRequire) 
+                                    self.run(data, section, json.name, allowRequire)
                                 });
                             } else {
                                 console.log("[Loader] Has no 'main' file?")
@@ -200,7 +200,7 @@ class Manager extends EventEmitter {
                     }
 
                 });
-                
+
             }
             return self.defined[section]
         }
@@ -267,7 +267,7 @@ class Manager extends EventEmitter {
             register: (id, services) => {
                 this.defined[section][name].services = services
                 this.defined[section][name].registered = true
-              
+
                 this.checkMounting()
             },
             //BUILD A CUSTOM MOUNT
@@ -280,27 +280,40 @@ class Manager extends EventEmitter {
             //BUILT A NORMAL MOUNT (with callback naming)
             onMount: (callback) => {
                 const nameFunction = function (fn, name) {
-                    return Object.defineProperty(fn, 'name', {value:  name, configurable: true});
-                  };
+                    return Object.defineProperty(fn, 'name', { value: name, configurable: true });
+                };
                 this.on('mount-imports', () => {
                     let data = this.getGlobalServices(section, name)
                     callback = nameFunction(callback, name)
                     callback(data)
                 });
             },
-            //GET PLUGINS PACKAGE (can be use for settings, etc)
-            getPackage: () => {
-                return this.defined[id][name].package
+            //GET ALL DEFINED PACKAGE (can be use for settings, etc)
+            getDefined: () => {
+                let local = {}
+                for (let _section in this.defined) { //Loop them
+                    local[_section] = {} //Get object of module 
+                    for (let _name in this.defined[_section]) {
+                        if (_name != "__customRegisters") { //Check to see if __customRegisters was for loop, if so ignore it
+                            local[_section][_name] = {}
+                            local[_section][_name].package = this.defined[_section][_name].package
+                        }
+                    }
+                }
+                return local
             }
         }
         //Grab the GLOBAL ID (whatever has be set), and use it as the MODULE NAMSPACE (keep in mind the word "defined" will still work anywhere)
         let id = this.id
         let newCode = `module.exports = function(require, console, ${id}, log) { ${code} }`;
         self = null
+        /*
         newCode = transform(newCode, {
             "presets": ["env", "react"],
             "plugins": ["transform-react-jsx"]
         }).code
+        */
+        //console.log(newCode)
         let launchCode = eval(newCode);
         //Run the code
         launchCode(customRequire, console, defined, null);
@@ -316,7 +329,7 @@ class Manager extends EventEmitter {
                     if (this.defined[section][mod].registered == false) {
                         pass = false
                     }
-                } catch (e) {}
+                } catch (e) { }
             }
         }
         if (pass && !this.pass) {
@@ -388,9 +401,9 @@ class Manager extends EventEmitter {
 
 let m = new Manager()
 
-function PluginManager() {}
-PluginManager.prototype.addDefined = function (id, path, allowRequire = null, customRegisters) {return m.addDefined.call(this, id, path, allowRequire, customRegisters);}
-PluginManager.prototype.onAppReady = function (callback) {m.appReady(callback)}
-PluginManager.prototype.mountAll = function () {m.checkMounting()}
-PluginManager.prototype.setDefinedID = function (id) {m.setDefinedID(id)}
-module.exports= PluginManager;
+function PluginManager() { }
+PluginManager.prototype.addDefined = function (id, path, allowRequire = null, customRegisters) { return m.addDefined.call(this, id, path, allowRequire, customRegisters); }
+PluginManager.prototype.onAppReady = function (callback) { m.appReady(callback) }
+PluginManager.prototype.mountAll = function () { m.checkMounting() }
+PluginManager.prototype.setDefinedID = function (id) { m.setDefinedID(id) }
+module.exports = PluginManager;
