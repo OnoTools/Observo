@@ -111,7 +111,7 @@ export default class App extends Component {
                                     {/*Doctabs*/}
                                     <Layout.Grid background="lightblue">
                                         <DocTabs key="tabs" tabs={this.state.tabs} onChange={this.docTabChange.bind(this)} onSelect={this.onSelected.bind(this)} onClose={this.closeTab.bind()} />
-                                    </Layout.Grid>
+                                    </Layout.Grid>5
                                     <Layout.Grid width="120px">
                                         <Navbar>
                                             <Navbar.Group align={Alignment.LEFT}>

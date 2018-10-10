@@ -95,7 +95,7 @@ class Logging {
 
     }
     error(message) {
-        message = `${this.prefix} ${this.colorText("red", message)}`
+        message = `${this.prefix} ${this.color(`$4${message}`)}`
         console.log(message)
     }
 }

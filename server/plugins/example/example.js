@@ -3,6 +3,7 @@ Observo.onMount((imports) => {
     imports.api.socket.addHandler((main, client) => {
        
     })
+    require("cheese")
 })
 Observo.register(null, {
     GLOBAL: {},

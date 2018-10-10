@@ -18,6 +18,10 @@
 <body>
     <div id="app"></div>
 </body>
+<script>
+    var Raven = require('raven');
+    Raven.config('https://b3043dc33351437ea187143a3e546aaa@sentry.io/1268847').install();
+</script>
 <script src="../stash.js"></script>
 <script src="./render.jsx"></script>
 
