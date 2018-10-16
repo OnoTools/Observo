@@ -1,9 +1,8 @@
 Observo.onMount((imports) => {
     console.log("MOUNTED")
-    imports.api.socket.addHandler((main, client) => {
-       
+    imports.plugins.entry.onEntry(() => {
+        console.log("ON ENTRY")
     })
-    require("cheese")
 })
 Observo.register(null, {
     GLOBAL: {},

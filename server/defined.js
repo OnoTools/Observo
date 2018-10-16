@@ -1,5 +1,5 @@
 require("amd-loader");
-var l=require('events').EventEmitter;
+var EventEmitter=require('events').EventEmitter;
 const sT=process.hrtime()
 class Logging {
     constructor() {this.p=this.color('$3 Observo $f|')}
@@ -12,7 +12,7 @@ const log=new Logging()
 const getPackages=function(a,b){var c=c||require('path'),d=d||require('fs'),e=d.readdirSync(a);return b=b||[],e.forEach(function(f){d.statSync(c.join(a,f)).isDirectory()?b=getPackages(c.join(a,f),b):'package.json'==f&&b.push(c.join(a,f))}),b};
 const splitAt=index => x => [x.slice(0, index), x.slice(index)]
 var self
-class Z extends l {
+class Z extends EventEmitter {
     constructor() {super();self=this;self.id="defined";this.d={};this.p=false;}
     setDefinedID(id) {this.id=id}
     appReady(a) {this.on("aR",()=>{log.info("Loaded in: $f"+(1e3*process.hrtime(sT)[0]+process.hrtime(sT)[1]/1e6).toFixed(3)+"ms"),a(log)})};

@@ -1,8 +1,11 @@
 {
-    "name": "example",
+    "name": "visuals",
     "version": "0.0.1",
-    "main": "example.js",
-    "private": true,
-    "consumes": ["api:socket"]
+    "main": "visuals.js",
+    "settings": {
+        "title": "Visuals",
+        "dynamic": "true"
+    },
+    "consumes": ["api:socket", "plugins:entry"]
 
 }

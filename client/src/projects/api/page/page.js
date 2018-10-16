@@ -1,11 +1,12 @@
 //Example (Client) Page
+
+//import { Layout } from "@importcore/crust" 
+let { Layout } = require("@importcore/crust")
 class LoadedPages {
     constructor() {
         this.pages = {}
     }
     addPage(name, component) {
-        console.log(name)
-        console.log(component)
         if (this.pages[name] == null) {
             this.pages[name] = component
         }
@@ -20,21 +21,13 @@ class LoadedPages {
     }
 }
 let loaded = new LoadedPages()
-Observo.onMount((imports) => {
-
-})
 Observo.register(null, {
     GLOBAL: {
-        register: (component) => {
-            console.log(component)
-            let name;
-            try { throw new Error(); }
-            catch (e) {
-                var re = /(\w+)@|at (\w+) \(/g, st = e.stack, m;
-                re.exec(st), m = re.exec(st);
-                name = m[1] || m[2];
-            }
+        register: (name, component) => {
             loaded.addPage(name, component)
+        },
+        usePage: (name, socket, uuid) => {
+            socket.emit(`${name}_verifyPage`, {uuid: uuid})
         }
     },
     API: {

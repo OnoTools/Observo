@@ -293,7 +293,7 @@ export default class App extends Component {
     render() {
         return (
             <Window color="rgba(0, 153, 191, 0)" background="rgba(0, 153, 191, 1)">
-                <TitleBar background="#00acd7" title={<span className="observo-text">OBSERVO</span>} controls />
+                <TitleBar background="#00acd7" style={{height: 30}}title={<span className="observo-text">OBSERVO</span>} controls />
                 <Debug isOpen={this.state.isDebugOpen} />
                 <GlobalContext.Provider value={this.state.globalProvider}>
                     <Layout.Grid canvas>

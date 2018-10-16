@@ -3,8 +3,9 @@
     "version": "1.0.0",
     "main": "entry.js",
     "author": "ImportProgram",
-    "settings:": {
-        "dynamic": "true"
+    "settings": {
+        "title": "Entry",
+        "dynamic": true
     },
-    "consumes": [""]
+    "consumes": ["api:socket", "api:database", "api:page"]
 }

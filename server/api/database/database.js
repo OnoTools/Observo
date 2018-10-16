@@ -1,5 +1,5 @@
 var mysql = require("mysql")
-const uuidv4 = require('uuid/v4'); //Random
+const uuidv4 = require('uuid/v4')
 const md5 = require("md5")
 const connect = (database = null) => {
     let data //Makes the variable here
@@ -18,12 +18,12 @@ const connect = (database = null) => {
         }
     }
     //Make the connection
-    var con = mysql.createConnection(data);
+    var con = mysql.createConnection(data)
     //Connect
     con.c
     con.connect(function (err) {
-        if (err) throw err; //If error occurs, it with throw it
-    });
+        if (err) throw err //If error occurs, it with throw it
+    })
     return con //Retsurn that connection to whatever is calling it
 }
 //Lazy workaround to close connection after a query
@@ -41,26 +41,23 @@ let db = (db) => {
 }
 let createDB = (database, callback) => {
     db().query(`CREATE DATABASE IF NOT EXISTS ${database}`, function (err, result) {
-        if (err) throw err;
+        if (err) throw err
         callback.call()
     })
 }
-console.log("Connecting to Main DB")
 //Plugin is ready to be used
 Observo.onCustomMount((imports) => {
     console.log("Loaded Databases")
     var sql = "CREATE TABLE IF NOT EXISTS `users` ( `id` int(11) NOT NULL AUTO_INCREMENT,`uuid` varchar(100) NOT NULL,`sessionKey` varchar(100) NOT NULL,`authKey` varchar(100) NOT NULL,`username` varchar(100) NOT NULL,`password` varchar(100) NOT NULL,`role` int(11) NOT NULL,`permissions` text NOT NULL,`avatar` text NOT NULL,`color` varchar(6) NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=latin1";
     //Lets query the SQL for the USERS table above
     db("data").query(sql, function (err, result) {
-        if (err) throw err;
-    });
-
+        if (err) throw err
+    })
     var sql = "CREATE TABLE IF NOT EXISTS `projects` (`id` int(11) NOT NULL AUTO_INCREMENT, `plugins` text NOT NULL, `name` text NOT NULL,`user_uuid` varchar(100) NOT NULL,`created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP(),`last_edited` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP(),`archived` tinyint(1) NOT NULL,PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1"
     db("data").query(sql, function (err, result) {
-        if (err) throw err;
-    });
+        if (err) throw err
+    })
     let dbs = imports.api.database.API.getManager()
-    console.log(JSON.stringify(dbs))
     dbs.isRole("MASTER", (response) => {
         if (!response) {
             dbs.addRole("MASTER", "red", () => {
@@ -77,7 +74,6 @@ Observo.onCustomMount((imports) => {
     })
 })
 
-let handler = {}
 class Database {
     constructor() {
 
@@ -90,7 +86,7 @@ class Database {
             } else {
                 callback(false)
             }
-        });
+        })
     }
     isUserByID(uuid, callback) {
         db("data").query(`SELECT * FROM users WHERE (uuid="${uuid}")`, function (err, results, fields) {
@@ -100,7 +96,7 @@ class Database {
             } else {
                 callback(false)
             }
-        });
+        })
     }
     /**
      * VailidateUser - Check a user based on given UUID and sessionKey
@@ -117,7 +113,7 @@ class Database {
             } else {
                 callback(false)
             }
-        });
+        })
     }
     /**
      * SignInViaAuth - Signs in user via an AUTH KEY
@@ -196,7 +192,7 @@ class Database {
             } else {
                 callback(null)
             }
-        });
+        })
     }
     /**
      * UpdateSessionKey - Updates the sessionKey of a user based on the UUID
@@ -214,7 +210,7 @@ class Database {
      * @param {UUID} uuid 
      */
     newAuthKey(uuid) {
-        let authKey = uuidv4();
+        let authKey = uuidv4()
         let query = `UPDATE users SET authKey = '${authKey}' WHERE uuid = '${uuid}'`
         db("data").query(query, function (err, results, fields) {
             if (err) console.log(err)
@@ -228,7 +224,7 @@ class Database {
      * @param {Function} callback 
      */
     hasRole(uuid, role, callback) {
-        let authKey = uuidv4();
+        let authKey = uuidv4()
         let query = `SELECT * FROM users WHERE (uuid="${uuid}")`
         console.log(query)
         db("data").query(query, function (err, results, fields) {
@@ -259,7 +255,7 @@ class Database {
         })
     }
     addRole(name, color, callback) {
-        let uuid = uuidv4();
+        let uuid = uuidv4()
         let query = `INSERT INTO roles (uuid, name, color, permissions) VALUES ('${uuid}', '${name}', '${color}', '{}')`
         db("data").query(query, function (err, results, fields) {
             if (err) console.log(err)
@@ -287,7 +283,7 @@ class Database {
         db("data").query(`SELECT * FROM users WHERE (uuid="${uuid}")`, function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
-                console.print(results)
+                //console.print(results)
                 callback(results[0].username)
             } else {
                 callback(null)
@@ -314,8 +310,9 @@ class Database {
     //                      PROJECT DATABASES ONLY                         //
     //                                                                     //
     /////////////////////////////////////////////////////////////////////////
-    isProject(projectName, callback) {
-        let query = `SELECT * FROM projects WHERE (name="${projectName}")`
+    //TODO: Change to UUID
+    isProject(uuid, callback) {
+        let query = `SELECT * FROM projects WHERE (uuid="${uuid}")`
         db("data").query(query, function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
@@ -325,25 +322,66 @@ class Database {
             }
         })
     }
-    getProject(projectName, callback) {
-        this.isProject(projectName, () => {
-            console.log("is project")
-            console.log(projectName)
-            let query = `SELECT * FROM projects WHERE (name="${projectName}")`
+    //TODO: Change to UUID
+    getProject(uuid, callback) {
+        this.isProject(uuid, () => {
+            let query = `SELECT * FROM projects WHERE (uuid="${uuid}")`
             db("data").query(query, function (err, results, fields) {
                 if (err) console.log(err)
-                console.log("here")
-                console.log(JSON.stringify(results))
                 if (results.length > 0) {
-                    console.log("data send")
-                    callback(results[0])
+                    let projectData = results[0]
+                    query = `SELECT * FROM pages`
+                    db(`_${uuid.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+                        if (err) console.log(err)
+                        if (results.length > 0) {
+                            callback(projectData, results)
+                        } else {
+                            callback(false)
+                        }
+                    })
                 } else {
                     callback(null)
                 }
             })
         })
     }
-    addProject(projectName, uuid, preset, callback) {
+    getPagesFromProject(uuid, plugin, callback) {
+        this.isProject(uuid, () => {
+            let query = `SELECT * FROM projects WHERE (uuid="${uuid}")`
+            db("data").query(query, function (err, results, fields) {
+                if (err) console.log(err)
+                if (results.length > 0) {
+                    query = `SELECT * FROM pages WHERE (plugin="${plugin}")`
+                    db(`_${uuid.replace(/-/ig, "")}`).query(query, function (err, _results, fields) {
+                        if (err) console.log(err)
+                        if (_results.length > 0) {
+                            callback(_results)
+                        } else {
+                            callback(false)
+                        }
+                    })
+                } else {
+                    callback(null)
+                }
+            })
+        })
+    }
+    isPage(project, page, callback) {
+        this.isProject(project, () => {
+            let query = `SELECT * FROM pages WHERE (uuid="${page}")`
+            db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+                if (err) console.log(err)
+                if (results.length > 0) {
+                    callback(true)
+                } else {
+                    callback(false)
+                }
+            })
+        })
+    }
+    createPage(projectName, name) { }
+    /*
+    addProject(projectName, uuid, callback) {
         //Check first if this project name is avalable
         projectName = projectName.replace(/[^a-zA-Z ]/g, "")
         this.isProject(projectName, (state) => {
@@ -368,19 +406,143 @@ class Database {
                 callback(false)
             }
         })
-    }
+    }*/
 
 }
-let manager = new Database();
+/*
+let id = `ae78bth37-ad38-770f-96ec-a1621edb3c7d`.replace(/-/ig, "")
+createDB(`_${id}`, () => {
+    console.log("$4created")
+})*/
+let manager = new Database()
 Observo.register(null, {
     GLOBAL: {
-        load(projectName) {
+        getNameByUUID: (name, uuid, callback) => {
+            manager.getNameByUUID(uuid, callback)
+        },
+        getPagesFromProject: (name, uuid, plugin, callback) => {
+            manager.getPagesFromProject(uuid, plugin, callback)
+        },
+        /**
+         * Use - Database Use
+         * @param project Project UUID
+         * @param page Page UUID
+         * @function callback Callback to this functon
+         */
+        connect: (name, project, page, callback) => {
+            let projectDatabase = `_${project.replace(/-/ig, "")}`
+            let pageTable = `_${page.replace(/-/ig, "")}`
+            let isPage = false
+            let custom = {}
+            custom.insert = (type, data, callback) => {
+                if (isPage) {
+                    let uuid = uuidv4()
+                    let query = `INSERT INTO ${pageTable} (uuid, type, data) VALUES ('${uuid}', '${type}', '${data}')`
+                    db(projectDatabase).query(query, function (err, results, fields) {
+                        if (err) console.log(err)
+                        callback(uuid)
+                    })
+                }
+            }
+            custom.update = (uuid, data, callback) => {
+                if (isPage) {
+                    let query = `UPDATE ${pageTable} SET data = '${data}' WHERE uuid = '${uuid}'`
+                    db(projectDatabase).query(query, function (err, results, fields) {
+                        if (err) console.log(err)
+                        callback()
+                    })
+                }
+            }
+            custom.updateAll = (type, data, callback) => {
+                if (isPage) {
+                    let query = `UPDATE ${pageTable} SET data = '${data}' WHERE type = '${type}'`
+                    db(projectDatabase).query(query, function (err, results, fields) {
+                        if (err) console.log(err)
+                        callback()
+                    })
+                }
+            }
+            custom.fetchByType = (type, callback, options) => {
+                let orderBy = ""
+                if (options) {
+                    if (options.backwards != null) {
+                        if (options.backwards) {
+                            orderBy = `ORDER BY id DESC`
+                        }
+                    }
+                }
+                if (isPage) {
+                    let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") ${orderBy}`
+                    db(projectDatabase).query(query, function (err, results, fields) {
+                        callback(results)
+                    })
+                } else {
+                    console.log("NOPE")
+                }
+            }
+            custom.isType = (type, callback) => {
+                if (isPage) {
+                    let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") `
+                    db(projectDatabase).query(query, function (err, results, fields) {
+                        if (results.length > 0) {
+                            callback(true)
+                        } else {
+                            callback(false)
+                        }
+                    })
 
+                } else {
+                    console.log("NOPE")
+                }
+            }
+            custom.getTypes = (callback) => {
+                if (isPage) {
+                    let query = `SELECT * FROM ${pageTable}`
+                    let types = []
+                    db(projectDatabase).query(query, function (err, results, fields) {
+                        for (let result in results) {
+                            if (!type.includes[results[result].type]) {
+                                type.push(results[result].type)
+                            }
+                        }
+                        callback(types)
+                    })
+                } else {
+                    console.log("NOPE")
+                }
+            }
+            custom.listUsers = (callback) => {
+                db("data").query(`SELECT * FROM users`, function (err, results, fields) {
+                    if (err) console.log(err)
+                    if (results.length > 0) {
+                        let data = {}
+                        for (let result in results) {
+                            data[results[result].uuid] = results[result].name
+                        }
+                        callback(data)
+                    } else {
+                        callback(null)
+                    }
+                })
+            }
+            custom.getNameByUUIDAsync = (uuid) => {
+                return new Promise(resolve => {
+                    manager.getNameByUUID(uuid, response => resolve(response))
+                })
+            }
+            custom.getNameByUUID = async (uuid) => {
+                return await custom.getNameByUUIDAsync(uuid)
+            }
+            manager.isPage(project, page, () => {
+                isPage = true
+                callback(custom)
+            })
+            return custom
         }
     },
     API: {
         getManager() {
-            return manager;
+            return manager
         }
     }
 })

@@ -6,30 +6,46 @@
         opacity: 1;
     }
 }
+div {
+    //border: 1px solid black;
+}
+button:focus {outline:0;}
+input, button, textarea, :focus {
+    outline: none;
+}
+.popout {
+    button {
+        transition: all .5s ease-in-out;
+        cursor: pointer;
+        &:hover {
+           transform: scale(1.2);
+        }
+        &:focus {
+            transform: scale(1.2);
+        }
+    }
+}
+.pt-tab[aria-selected="true"] {
+    box-shadow: none;
+}
 .background {
     background-color: rgba(0, 0, 0, 0);
     padding: 0px;
 }
-body, html {
+body, html { 
+    overflow: hidden;
     margin: 0px;
     padding: 0px;
 }
 body {
     background-color: gray;
     overflow: hidden;
-    height: 100%;
     padding: 0px;
     margin: 0px;
     overflow: hidden;
     user-select: none;
 }
 
-html {
-    overflow: hidden;
-    height: 100%;
-    padding: 0px;
-    margin: 0px
-}
 .observo-text {
     font-family: 'Audiowide', cursive;
     font-weight: bold !important;
@@ -47,4 +63,33 @@ html {
 
 .user-selection {
     background: rgba(128, 128, 128, 0.9)
+}
+
+
+//Scroll Bar
+.scrollY {
+    &::-webkit-scrollbar {
+        width: 5px;
+        
+        z-index: 80;
+        padding: 3px;
+        margin-right: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: gray;
+    }
+}
+.scrollX {
+    &::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+        z-index: 80;
+        padding: 3px;
+        margin-right: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: gray;
+    }
 }

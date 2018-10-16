@@ -1,6 +1,6 @@
 {
-    "name": "socket",
+    "name": "auth",
     "version": "1.0.0",
-    "main": "socket.js",
+    "main": "auth.js",
     "consumes": [""]
 }

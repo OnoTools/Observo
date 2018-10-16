@@ -7,9 +7,10 @@ var io = require('socket.io').listen(3000)
 var EventEmitter = require('events').EventEmitter;
 var events = new EventEmitter();
 const uuidv4 = require('uuid/v4'); //Random
-
+let database = null
+let clientsAuth = {}
 Observo.onCustomMount((imports) => {
-    let database = imports.api.database.API.getManager()
+    database = imports.api.database.API.getManager()
     let connectedClients = {}
     let socket = io.of("/core/").on('connection', function (client) {
         let sessionKey = uuidv4()
@@ -29,6 +30,7 @@ Observo.onCustomMount((imports) => {
                         }
                         vaildAuth = true
                         userUUID = response.uuid
+                        clientsAuth[userUUID] = sessionKey
                         client.emit("auth_vaildSignin", { authKey: response.authKey, sessionKey: sessionKey, uuid: response.uuid })
                         connectedClients[response.uuid] = client
                         console.log("VALID USER (because it is)")
@@ -54,6 +56,7 @@ Observo.onCustomMount((imports) => {
                                     }
                                     vaildAuth = true
                                     userUUID = response.uuid
+                                    clientsAuth[userUUID] = sessionKey
                                     client.emit("auth_vaildSignin", { authKey: response.authKey, sessionKey: sessionKey, uuid: response.uuid })
                                     connectedClients[response.uuid] = client
                                 }
@@ -65,8 +68,8 @@ Observo.onCustomMount((imports) => {
         })
         client.on("core_getProject", (data) => {
             if(vaildAuth) {
-                database.getProject(data.project, (projectData) => {
-                    client.emit("core_getProject", projectData)
+                database.getProject(data.project, (projectData, pages) => {
+                    client.emit("core_getProject", {projectData: projectData, pages: pages, plugins: Observo.getDefined()["plugins"]})
                 })
             }
         })
@@ -78,6 +81,7 @@ Observo.onCustomMount((imports) => {
                         let project = projects[p]
                         let custom = {
                             name: project.name,
+                            uuid: project.uuid,
                             lastEdited: project.last_edited,
                             plugins: null
                         }
@@ -115,32 +119,20 @@ let handler = {}
 
 Observo.register(null, {
     GLOBAL: {
-        addHandler: (callback) => {
-            let name;
-            try { throw new Error(); }
-            catch (e) {
-                var re = /(\w+)@|at (\w+) \(/g, st = e.stack, m;
-                re.exec(st), m = re.exec(st);
-                name = m[1] || m[2];
-            }
-            console.log(name)
+        addHandler: (name, callback) => {
             if (handler[name] == null) {
                 handler[name] = {}
-                let main = io.of("/plugins/" + name).on('connection', function (client) {
-                    let events = []
-                    const auth = true; //TODO: Make it not a constant
-                    events.push("auth")
-                    let checkOn = (name, callback) => {
-                        for (let e in events) {
-                            if (e != name) {
-                                client.on(name, () => { if (auth) { callback() } })
+                console.log("plugins/" + name)
+                let main = io.of("plugins/" + name).on('connection', function (client) {
+                    client.on("pluginAuth_SignInViaSessionKey", (data) => {       
+                            if (clientsAuth[data.uuid]) {
+                                if (clientsAuth[data.uuid] == data.sessionKey) {
+                                    client.emit("pluginAuth_vaildSesionKey")
+                                    callback(main, client, data.uuid, data.project)
+                                    console.log(`$EInbound Connection | $f${data.uuid}`)
+                                }
                             }
-                        }
-                    }
-                    let _main = { emit: (name, value) => { if (auth) { main.emit(name, value) } } }
-                    let _client = { on: checkOn }
-                    //this should be called when the auth process is done tbo
-                    callback(_main, _client)
+                    })
                 })
             } else {
                 console.log(`${name} is already a registered event handler!`)

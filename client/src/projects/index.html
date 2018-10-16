@@ -10,7 +10,8 @@
     <!-- blueprint-icons.css file must be included alongside blueprint.css! -->
     <link href="./../../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css" rel="stylesheet" />
     <link href="./../../node_modules/@blueprintjs/core/lib/css/blueprint.css" rel="stylesheet" />
-    <link rel="stylesheet" href="../../crust/components/layouts/grid/grid.less" />
+
+    <link href="./../../node_modules/@importcore/crust/dist/crust.css" rel="stylesheet" />
     <link rel="stylesheet" href="./style/app.less" />
     <link rel="stylesheet" href="./components/doctabs/doctabs.less" />
 </head>
@@ -19,9 +20,10 @@
     <div id="app"></div>
 </body>
 <script>
-    var Raven = require('raven');
-    Raven.config('https://b3043dc33351437ea187143a3e546aaa@sentry.io/1268847').install();
+    //var Raven = require('raven');
+    //Raven.config('https://b3043dc33351437ea187143a3e546aaa@sentry.io/1268847').install();
 </script>
+<script>process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';</script>
 <script src="../stash.js"></script>
 <script src="./render.jsx"></script>
 

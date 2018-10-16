@@ -51,13 +51,17 @@
     "regenerator-runtime": "^0.11.1"
   },
   "dependencies": {
+    "@importcore/crust": "^1.0.6",
     "amd-loader": "0.0.8",
+    "babel-preset-es2015": "^6.24.1",
     "hotkeys-js": "^3.3.5",
     "import-window": "^1.0.1",
     "is-electron-renderer": "^2.0.1",
+    "monaco-editor": "^0.14.3",
     "node-notifier": "^5.2.1",
     "raven": "^2.6.3",
     "react": "^16.4.1",
+    "react-beautiful-dnd": "^9.0.2",
     "react-desktop": "^0.3.5",
     "react-dom": "^16.4.1",
     "socket.io": "^2.1.1",

@@ -1,0 +1,6 @@
+{
+    "name": "visuals",
+    "version": "1.0.0",
+    "main": "visuals.js",
+    "consumes": ["api:socket", "api:page", "api:require"]
+}

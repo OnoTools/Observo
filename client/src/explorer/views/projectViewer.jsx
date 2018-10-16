@@ -101,7 +101,7 @@ class ProjectViewer extends Component {
                 let project = this.state.projects[p]
                 console.log(project)
                 items.push(
-                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onContextMenu={this.showContext.bind(true)} onClick={this.openProject.bind(this, project.name)} className="box">
+                    <Layout.Grid key={p} height="75px" width="100%" style={{ borderBottom: "1px solid black", cursor: "pointer" }} onContextMenu={this.showContext.bind(true)} onClick={this.openProject.bind(this, project.uuid)} className="box">
                         <p>{project.name}</p>
                         <p>Last Edited: {moment(new Date(project.lastEdited.replace(/\s/g, "T")).toUTCString()).fromNow()}</p>
                     </Layout.Grid>

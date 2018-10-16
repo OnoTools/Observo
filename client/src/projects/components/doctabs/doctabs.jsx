@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import ReactDOM, { render } from 'react-dom'
 import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Alignment } from "@blueprintjs/core";
-import { Layout } from "crust"
+import { Layout } from "@importcore/crust"
 import { AppToaster } from "../../toaster";
 import './doctabs.less'
 import Draggable from 'react-draggable';
@@ -45,10 +45,8 @@ export default class DocTab extends Component {
     handleDrag(id, data, event) {
         let offsetX = id * this.width
         let x = event.x + offsetX
-
         this.setState({ selectedTabX: x })
     }
-
 
     handleStop(id, data, event) {
         //shift code here and call onChange event
@@ -99,12 +97,12 @@ export default class DocTab extends Component {
             let boundLeft = width * -loop
             let boundRight = this.state.width - (width * (loop + 1))
 
-            let background = "#77F"
+            let background = "rgb(110, 207, 255)"
             if (data.background) {
                 background = data.background
             }
             let position = { x: 0, y: 0 }
-            let zIndex = 100
+            let zIndex = 20
             let opacity = 1
             if (this.state.selectedTab != loop) {
                 opacity = 0.5
@@ -134,8 +132,8 @@ export default class DocTab extends Component {
                 onDrag={this.handleDrag.bind(this, loop)}
                 onStop={this.handleStop.bind(this, loop)}
                 bounds={{ 'left': boundLeft, 'right': boundRight }}>
-                <div className="item handle" style={{ position: 'relative', zIndex: zIndex, backgroundColor: background, opacity: opacity, border: "1px solid black" }}>
-                    <div className="label-c text">{data.title}</div>
+                <div className="item handle" style={{ position: 'relative', zIndex: zIndex, backgroundColor: background, opacity: opacity,  }}>
+                    <div className="label-c text" style={{fontWeight: "bold"}}>{data.title}</div>
 
                     <div id="selection-indicator"></div>
                     <svg id="close-button" viewBox="0 0 100 100" preserveAspectRatio="none"  onClick={this.handleOnClose.bind(this,data.title)}>
@@ -150,19 +148,48 @@ export default class DocTab extends Component {
     }
     updateDimensions() {
         var width = ReactDOM.findDOMNode(this.refs.area).getBoundingClientRect().width
-        //console.log(width)
+        //////console.log(width)
         this.setState({ width: width });
     }
     componentDidMount() {
         window.addEventListener("resize", this.updateDimensions.bind(this));
         this.updateDimensions();
     }
-    componentWillReceiveProps() {
+    componentWillReceiveProps(newProps) {
+        ////console.log("NEW PROPS")
+        ////console.log(newProps)
+        ////console.log(this.props)
+
         if (this.props.tabs) {
             this.updateDimensions();
-            //console.log("updated")
+            ////console.log("updated")
             this.setState({ tabs: this.props.tabs })
         }
+        if (this.props.selected != newProps.selected) {
+            for (let a in this.state.tabs) {
+                if (this.state.tabs[a].title == newProps.selected) {
+                    this.setState({ selectedTab: a})
+                }
+            }
+        } 
+        if (this.props.remove != newProps.remove) {
+            for (let a in this.state.tabs) {
+                if (this.state.tabs[a].title == newProps.remove) {
+                    let tabs = this.state.tabs
+                    tabs.splice(a, 1);
+                    ////console.log(tabs)
+                    let selected = null
+                    let total = tabs.length - 1
+                    if (a-1 > 0) {
+                        selected = a - 1
+                    } else if (a+1 == total) {
+                        selected = a + 1
+                    } 
+                    this.setState({ selectedTab: selected, tabs: tabs})
+                    this.props.onChange(this.state.tabs)
+                }
+            }
+        } 
     }
     componentWillUnmount() {
         window.removeEventListener("resize", this.updateDimensions.bind(this));
@@ -172,8 +199,8 @@ export default class DocTab extends Component {
     render() {
         return <div>
             <Layout.Grid canvas>
-                <Layout.Grid row>
-                    <Layout.Grid row height="50px" width="100%" ref="area">
+                <Layout.Grid col>
+                    <Layout.Grid col height="50px" width="100%" ref="area">
                         {this.renderTabs()}
                     </Layout.Grid>
                 </Layout.Grid>

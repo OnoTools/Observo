@@ -1,0 +1,6 @@
+{
+    "name": "entry",
+    "version": "1.0.0",
+    "main": "entry.js",
+    "consumes": ["api:socket", "api:page", "api:require", "api:auth"]
+}

@@ -1,0 +1,11 @@
+{
+    "name": "equations",
+    "version": "1.0.0",
+    "main": "equations.js",
+    "author": "ImportProgram",
+    "settings": {
+        "title": "Equations",
+        "dynamic": true
+    },
+    "consumes": ["api:socket", "api:database", "api:page", "plugin:entry"]
+}

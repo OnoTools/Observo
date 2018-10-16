@@ -1,6 +1,7 @@
 {
     "name": "page",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "main": "page.js",
+    "author": "OnoTools",
     "consumes": [""]
 }
