@@ -72,6 +72,9 @@ class Sidebar extends Component {
                                 lNode.label = serverPlug.package.settings.title
                                 lNode.hasCaret = false
                                 lNode.plugin = pluginName
+                                if (serverPlug.package.settings.icon != null) {
+                                    lNode.icon = serverPlug.package.settings.icon
+                                }
                                 //CHeck to see if the server plugin is dynamic, if so add caret and make it expanded
                                 if (serverPlug.package.settings.dynamic) {
                                     lNode.isExpanded = true
@@ -84,6 +87,7 @@ class Sidebar extends Component {
                                             let oNode = {}
                                             oNode.id = loop
                                             oNode.prefix = serverPlug.package.settings.title
+                                          
                                             oNode.label = pages[page].name
                                             oNode.uuid = pages[page].uuid
                                             oNode.plugin = pluginName
@@ -119,7 +123,7 @@ class Sidebar extends Component {
         })
     }
     render() {
-        return <Layout.Grid width="200px" height="100%" background="gray">
+        return <Layout.Grid width="200px" height="100%" background="gray" style={{fontSize: 16, fontWeight: 'bold'}}>
             <Tree
                 contents={this.state.nodes}
                 onNodeClick={this.handleNodeClick.bind(this)}

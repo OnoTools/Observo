@@ -293,6 +293,9 @@ Observo.onMount((imports) => {
                         console.log(structure)
                         this.setState({ localStructure: structure, baseStructure: structure })
                     })
+                    socketObject.on("entry_userName", ({ name }) => {
+                        this.setState({ username: name })
+                    })
                     socketObject.on("entry_newUser", ({ uuid, name }) => {
                         if (imports.api.auth.uuid() != uuid) {
                             let users = this.state.users
@@ -368,7 +371,7 @@ Observo.onMount((imports) => {
         async onEditorChange(structure) {
             console.log(structure)
             console.log("SETTING STATE")
-            this.setState({baseStructure: structure})
+            this.setState({ baseStructure: structure })
         }
         async onEntrySubmit() {
             let pass = true
@@ -432,49 +435,29 @@ Observo.onMount((imports) => {
             }
         }
         renderEntryList() {
-            let items = []
-
-            //Get User UUID
-
-            items.push(<Layout.Grid row style={{ marginRight: 20}} height={100}>
-                <Layout.Grid col style={{}}>
-                    <Layout.Grid width={100} style="center">
-                        <p style={{ fontSize: 16, fontWeight: "bold", textOverflow: "ellipsis", overflow: "hidden", display: "block", whiteSpace: "nowrap" }}>
-                            User
-                        </p>
-                    </Layout.Grid>
-                </Layout.Grid>
-            </Layout.Grid>)
-            
-            for (let uuid in this.state.localStructure) {
-                let info = this.state.localStructure[uuid]
-                items.push(
-                    <Layout.Grid row key={uuid} width={info.width} style={{ marginRight: 20 }} height={100}>
-                        <Layout.Grid col style={{}}>
-                            <Layout.Grid width={info.width} style="center">
-                                <p style={{ fontSize: 16, fontWeight: "bold", textOverflow: "ellipsis", overflow: "hidden", display: "block", whiteSpace: "nowrap" }}>
-                                    {info.label}
-                                </p>
-                            </Layout.Grid>
-                        </Layout.Grid>
-                    </Layout.Grid>)
-            }
+  
             let list = []
-            list.push(<Layout.Grid col height={20} style={{borderBottom: "1px solid black", paddingBottom: 5, marginBottom: 5 }}>{items}</Layout.Grid>)
             let entries = this.state.entryList
+            let loop = 0
             for (let entry in entries) {
+                let background = "white"
+                if (loop % 2 == 0) {
+                    background = "lightgray"
+                }
                 let eList = []
-                eList.push(<Layout.Grid>{entries[entry].name}</Layout.Grid>)
+                eList.push(<Layout.Grid width={100} style={{ marginRight: 20, fontSize: 17 }} >{entries[entry].name}</Layout.Grid>)
                 for (let uuid in this.state.localStructure) {
+                    let info = this.state.localStructure[uuid]
                     eList.push(
-                        <Layout.Grid>
+                        <Layout.Grid width={info.width} style={{ marginRight: 20, fontSize: 17 }}>
                             {entries[entry].entry[uuid]}
                         </Layout.Grid>
                     )
                 }
-                list.push(<Layout.Grid col height={50}>
+                list.push(<Layout.Grid background={background} col height={50}>
                     {eList}
                 </Layout.Grid>)
+                loop++
             }
             return list
         }
@@ -489,6 +472,23 @@ Observo.onMount((imports) => {
                 inputValues[user] = {}
             }
             //Loop through all outlined objects,
+
+
+            items.push(<Layout.Grid row key="name" width={100} style={{ marginRight: 20 }}>
+                <Layout.Grid col style={{ borderBottom: "1px solid black", paddingBottom: 15 }}>
+                    <Layout.Grid style="center">
+                        <p style={{ fontSize: 18, fontWeight: "bold", textOverflow: "ellipsis", overflow: "hidden", display: "block", whiteSpace: "nowrap" }}>
+                            User
+                        </p>
+                    </Layout.Grid>
+
+                </Layout.Grid>
+                <Layout.Grid col style={{ paddingTop: 10 }} >
+                    <Layout.Grid background="white" className="center" style={{padding: 10}} width="100%" height={30}>
+                            <p>{this.state.username}</p>
+                    </Layout.Grid>
+                </Layout.Grid>
+            </Layout.Grid>)
             for (let uuid in this.state.localStructure) {
                 let info = this.state.localStructure[uuid]
                 //If the client has imported data in yet, do so. (should be blank on boot)
@@ -533,7 +533,7 @@ Observo.onMount((imports) => {
                             {items}
                         </Layout.Grid>
                     </Layout.Grid>
-                    <Layout.Grid row className="scrollY" style={{ overflowY: 'auto', overflow: "overlay", height: 0, padding: 10, borderTop: "2px solid gray" }}>
+                    <Layout.Grid row className="scrollY"  style={{ overflowY: 'auto', overflow: "overlay", height: 0, paddingLeft: 30,  borderTop: "2px solid gray" }}>
                         {this.renderEntryList()}
                     </Layout.Grid>
                 </Layout.Grid>

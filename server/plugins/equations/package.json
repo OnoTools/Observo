@@ -5,7 +5,8 @@
     "author": "ImportProgram",
     "settings": {
         "title": "Equations",
-        "dynamic": true
+        "dynamic": true,
+        "icon": "function"
     },
     "consumes": ["api:socket", "api:database", "api:page", "plugin:entry"]
 }

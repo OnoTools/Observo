@@ -379,7 +379,47 @@ class Database {
             })
         })
     }
-    createPage(projectName, name) { }
+    isPageByPlugin(project, plugin, callback) {
+        this.isProject(project, () => {
+            let query = `SELECT * FROM pages WHERE (plugin="${plugin}")`
+            db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+                if (err) console.log(err)
+                if (results.length > 0) {
+                    callback(true)
+                } else {
+                    callback(false)
+                }
+            })
+        })
+    }
+    addPageToProject(project, page) {
+        
+        let query = `CREATE TABLE '_${project.replace(/-/ig, "")}' (
+            'id' int(11) NOT NULL AUTO_INCREMENT,
+            'uuid' varchar(100) NOT NULL,
+            'type' varchar(100) NOT NULL,
+            'data' text NOT NULL,
+            'timestamp' timestamp NOT NULL DEFAULT current_timestamp(),
+            PRIMARY KEY ('id')
+           ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1`
+        db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+            if (err) console.log(err)
+            if (results.length > 0) {
+                callback(true)
+            } else {
+                callback(false)
+            }
+        })
+    }
+    hasDefaultPage(project, plugin) {
+        this.isPageByPlugin(project, plugin, (result) => {
+            if (!result) {
+                this.addPageToProject(project, "Default")
+            }
+        })
+    } 
+    createPage(projectName, name) { 
+    }
     /*
     addProject(projectName, uuid, callback) {
         //Check first if this project name is avalable

@@ -1,0 +1,12 @@
+{
+    "name": "events",
+    "version": "1.0.0",
+    "main": "main.js",
+    "settings": {
+        "title": "Events",
+        "dynamic": false,
+        "icon": "timeline-events"
+    },
+    "consumes": ["api:socket", "api:database"]
+
+}

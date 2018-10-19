@@ -1,6 +1,6 @@
 
 
-let allowedRequire = ["react", "react-dom", "@importcore/crust", "@blueprintjs/core", "uuid/v4", "react-beautiful-dnd", "react-monaco-editor", "monaco-editor"]
+let allowedRequire = ["react", "react-dom", "@importcore/crust", "@blueprintjs/core", "uuid/v4", "react-beautiful-dnd", "brace", "react-ace", "@convergence/ace-collab-ext"]
 
 
 Observo.register(null, {

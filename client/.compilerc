@@ -1,8 +1,18 @@
 {
-    "application/javascript": {
+  "env": {
+    "development": {
+      "application/javascript": {
         "presets": [
-            "react",
-            "env"
+          "react",
+          [
+            "env",
+            {
+              "targets": {
+                "electron": "3.0"
+              }
+            }
+          ],
+          "react"
         ],
         "plugins": [
             "react-hot-loader/babel",
@@ -30,6 +40,28 @@
                 }
             ],
             "transform-object-rest-spread"
-        ]
+        ],
+        "sourceMaps": "inline"
+      }
+    },
+    "production": {
+      "application/javascript": {
+        "presets": [
+          [
+            "env",
+            {
+              "targets": {
+                "electron": "3.0"
+              }
+            }
+          ],
+          "react"
+        ],
+        "plugins": [
+          "transform-async-to-generator"
+        ],
+        "sourceMaps": "none"
+      }
     }
+  }
 }

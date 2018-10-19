@@ -122,7 +122,6 @@ Observo.register(null, {
         addHandler: (name, callback) => {
             if (handler[name] == null) {
                 handler[name] = {}
-                console.log("plugins/" + name)
                 let main = io.of("plugins/" + name).on('connection', function (client) {
                     client.on("pluginAuth_SignInViaSessionKey", (data) => {       
                             if (clientsAuth[data.uuid]) {

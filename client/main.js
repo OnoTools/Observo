@@ -1,11 +1,10 @@
 const electron = require('electron')
+const { app } = require('electron')
+
 const importWindow = require('import-window')
 // Module to control application life.
-const app = electron.app
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
-import { enableLiveReload } from "electron-compile"
-enableLiveReload();
 const path = require('path')
 const url = require('url')
 
@@ -33,7 +32,7 @@ function createWindow() {
   //mainWindow.win.setResizable(false)
   //mainWindow.win.setMinimumSize(800, 600);
   //mainWindow.win.setMaximumSize(800, 600);
-  mainWindow.openDevTools();
+  //mainWindow.openDevTools();
   mainWindow.win.once('ready-to-show', () => {
     mainWindow.win.show()
   })

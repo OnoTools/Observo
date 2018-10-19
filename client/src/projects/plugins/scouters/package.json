@@ -1,0 +1,10 @@
+{
+    "name": "scouters",
+    "version": "1.0.0",
+    "main": "main.js",
+    "consumes": [
+        "api:socket",
+        "api:page",
+        "api:require"
+    ]
+}

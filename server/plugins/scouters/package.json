@@ -1,0 +1,12 @@
+{
+    "name": "scouters",
+    "version": "1.0.0",
+    "main": "main.js",
+    "settings": {
+        "title": "Scouters",
+        "dynamic": false,
+        "icon": "user"
+    },
+    "consumes": ["api:socket", "api:database"]
+
+}

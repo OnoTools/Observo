@@ -4,7 +4,10 @@ import { Window, TitleBar, Text } from 'react-desktop/windows';
 import { Layout } from "@importcore/crust"
 import { GlobalContext } from "global-context"
 
-
+import brace from 'brace';
+import 'brace/mode/javascript';
+import 'brace/theme/github';
+import 'brace/theme/solarized_dark';
 
 import { AppToaster } from "./toaster";
 import EventWindow from "./window"
@@ -54,7 +57,7 @@ export default class App extends Component {
             code = `//# sourceURL=${name.toUpperCase()}\n
             ${code}`
             let newCode = transform(code, {
-                "presets": [require.resolve("babel-preset-es2015"), require.resolve("babel-preset-react")],
+                "presets": [require.resolve("babel-preset-env"), require.resolve("babel-preset-react")],
                 "plugins": [
                     require.resolve("babel-plugin-transform-async-to-generator"),
                     require.resolve("babel-plugin-transform-object-rest-spread")
@@ -213,7 +216,7 @@ export default class App extends Component {
                 items.push(
                     <div key={tab} style={style}>
                         <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
-                            <CustomObject uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
+                            <CustomObject height={this.state.areaHeight} width={this.state.areaWidth} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
                         </ErrorBoundary>
 
                     </div>)

@@ -4,12 +4,14 @@ Observo.onMount((imports) => {
     let pages = {}
     imports.api.socket.addHandler((global, client, uuid, project) => {
         imports.api.page.usePage(global, client, (global, client, page) => {
-            let db = imports.api.database.connect(project, page, () => {
-                db.fetchByType("OUTLINE", (results) => {
-
+            let db = imports.api.database.connect(project, page, async () => {
+                db.fetchByType("OUTLINE", async (results) => {
                     client.emit("entry_updateStructure", { structure: JSON.parse(results[0].data) })
+                    
                 })
                 sendEntryList()
+                let name = await db.getNameByUUID(uuid)
+                client.emit("entry_userName", { name})
             })
 
             let sendEntryList = () => {

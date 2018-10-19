@@ -140,7 +140,7 @@ class Manager extends EventEmitter {
         this.ready = false
         this.loading = false
         this.moduleList = []
-        this.transform = (c) => {return c}
+        this.transform = (c, n) => {return `//# sourceURL=${n.toUpperCase()}\n${c}`}
     }
     /**
      * SetDefinedID - Sets the DEFINED namespace used in a plugin/api
@@ -322,7 +322,7 @@ class Manager extends EventEmitter {
         let id = this.id
         let newCode = `module.exports = function(require, console, ${id}, log) { ${code} }`;
         self = null
-        newCode = this.transform(newCode)
+        newCode = this.transform(newCode, name)
         let launchCode = eval(newCode);
         //Run the code
         launchCode(customRequire, customConsole, defined, null);
