@@ -16,14 +16,9 @@ manager.setPrefix(() => {
 manager.transformCode((code, name) => {
     code = `//# sourceURL=${name.toUpperCase()}\n
     ${code}`
-    let newCode = Babel.transform(code, {
-        "presets": [require.resolve("babel-preset-es2015")],
-        "plugins": [
-            require.resolve("babel-plugin-transform-async-to-generator"),
-        ],
-    }).code
+
     //console.log(newCode)
-    return newCode
+    return code
 
 })
 manager.addDefined("API", "./api", true, ["API"]) //LOAD ALL API's

@@ -19,10 +19,9 @@ const connect = (database = null) => {
     }
     //Make the connection
     var con = mysql.createConnection(data)
-    //Connect
-    con.c
+    //Conne
     con.connect(function (err) {
-        if (err) throw err //If error occurs, it with throw it
+        if (err) throw err //If error occurs, it with throw it :24
     })
     return con //Retsurn that connection to whatever is calling it
 }
@@ -392,29 +391,31 @@ class Database {
             })
         })
     }
-    addPageToProject(project, page) {
-        
-        let query = `CREATE TABLE '_${project.replace(/-/ig, "")}' (
-            'id' int(11) NOT NULL AUTO_INCREMENT,
-            'uuid' varchar(100) NOT NULL,
-            'type' varchar(100) NOT NULL,
-            'data' text NOT NULL,
-            'timestamp' timestamp NOT NULL DEFAULT current_timestamp(),
-            PRIMARY KEY ('id')
-           ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1`
+    addPageToProject(project, plugin, name) {
+        let uuid = uuidv4()
+        let query = `INSERT INTO pages (uuid, plugin, name, timestamp) VALUES ('${uuid}', '${plugin}', '${name}', current_timestamp())`
         db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
             if (err) console.log(err)
-            if (results.length > 0) {
-                callback(true)
-            } else {
-                callback(false)
-            }
+            query = "CREATE TABLE `_" + uuid.replace(/-/ig, "") +  "` (`id` int(11) NOT NULL AUTO_INCREMENT,`uuid` varchar(100) NOT NULL,`type` varchar(100) NOT NULL,`data` text NOT NULL,`timestamp` timestamp NOT NULL DEFAULT current_timestamp(),PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1"
+            db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+                if (err) console.log(err)   
+            })
         })
     }
-    hasDefaultPage(project, plugin) {
-        this.isPageByPlugin(project, plugin, (result) => {
-            if (!result) {
-                this.addPageToProject(project, "Default")
+    /**
+     * hasDefaultPage - Checks to see if a plugin has a default page based on a project. If not create a page and a table to assocaited with it.
+     * @param {UUID} project 
+     * @param {String} plugin 
+     */
+    hasDefaultPage(plugin) {
+        this.listProjects((results) => {
+            for (let result in results) {
+                let project = results[result]
+                this.isPageByPlugin(project.uuid, plugin, (result) => {
+                    if (!result) {
+                        this.addPageToProject(project.uuid, plugin, "Default",)
+                    } 
+                })
             }
         })
     } 
@@ -462,6 +463,9 @@ Observo.register(null, {
         },
         getPagesFromProject: (name, uuid, plugin, callback) => {
             manager.getPagesFromProject(uuid, plugin, callback)
+        },
+        hasDefaultPage: (name) => {
+            manager.hasDefaultPage(name)
         },
         /**
          * Use - Database Use

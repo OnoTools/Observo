@@ -5,7 +5,7 @@
  * @author ImportProgram
  */
 
-
+//# sourceURL=defined.js
 require("amd-loader");
 var EventEmitter = require('events').EventEmitter;
 const startTime = process.hrtime()

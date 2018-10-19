@@ -1,0 +1,6 @@
+{
+    "name": "require",
+    "version": "1.0.0",
+    "main": "require.js",
+    "consumes": [""]
+}

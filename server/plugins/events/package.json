@@ -7,6 +7,6 @@
         "dynamic": false,
         "icon": "timeline-events"
     },
-    "consumes": ["api:socket", "api:database"]
+    "consumes": ["api:socket", "api:database", "api:page", "plugins:tba"]
 
 }

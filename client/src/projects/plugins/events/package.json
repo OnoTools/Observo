@@ -1,6 +1,6 @@
 {
     "name": "events",
     "version": "1.0.0",
-    "main": "main.js",
-    "consumes": ["api:socket", "api:page", "api:require"]
+    "main": "events.js",
+    "consumes": ["api:socket", "api:page", "api:require", "api:auth"]
 }

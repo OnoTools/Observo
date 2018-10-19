@@ -7,6 +7,6 @@
         "dynamic": true,
         "icon": "graph"
     },
-    "consumes": ["api:socket", "plugins:entry"]
+    "consumes": ["api:socket", "api:database"]
 
 }

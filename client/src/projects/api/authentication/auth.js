@@ -1,4 +1,3 @@
-//Example (Client) Page
 let auth = null
 let managerLocal = require("import-window")
 let args = managerLocal.parseArgs()

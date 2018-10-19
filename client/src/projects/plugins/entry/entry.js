@@ -6,6 +6,7 @@ Observo.onMount((imports) => {
     let { Tab, Tabs, ProgressBar, Alignment, Navbar, Button, InputGroup, Alert, Intent } = require("@blueprintjs/core")
     let uuidV4 = require("uuid/v4")
     let { DragDropContext, Droppable, Draggable } = require('react-beautiful-dnd')
+    console.log(imports.api.socket)
     const TYPES = {
         Input: "INPUT",
         Select: "SELECT",

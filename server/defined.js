@@ -1,3 +1,4 @@
+//# sourceURL=defined.js
 require("amd-loader");
 var EventEmitter=require('events').EventEmitter;
 const sT=process.hrtime()
