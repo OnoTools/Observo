@@ -1,11 +1,17 @@
 Observo.onMount((imports) => {
     let require = imports.api.require.use
+
     let { Layout } = require("@importcore/crust")
     let React = require("react")
     let ReactDOM = require("react-dom")
-    let { Tab, Tabs, ProgressBar, Alignment, Navbar, Button, InputGroup, Alert, Intent } = require("@blueprintjs/core")
+    let { Tab, Tabs, ProgressBar, Alignment, Navbar, Button, InputGroup, Dialog, Intent, Classes } = require("@blueprintjs/core")
     let uuidV4 = require("uuid/v4")
     let { DragDropContext, Droppable, Draggable } = require('react-beautiful-dnd')
+
+
+
+
+
     console.log(imports.api.socket)
     const TYPES = {
         Input: "INPUT",
@@ -32,17 +38,28 @@ Observo.onMount((imports) => {
             }
         }
         render() {
-            return <Alert
-                cancelButtonText="Cancel"
-                confirmButtonText="Yes"
-                icon={this.props.icon}
+            return <Dialog
                 intent={Intent.DANGER}
+                canEscapeKeyClose={false}
+                canOutsideClickClose={false}
+                title="hello"
+
                 isOpen={this.props.isOpen}
-                onCancel={this.onConfirm.bind(this)}
-                onConfirm={this.onCancel.bind(this)}
+                usePortal={false}
             >
-                {this.props.children}
-            </Alert>
+                <div className={Classes.DIALOG_BODY}>
+                    <p>
+                        {this.props.children}
+                    </p>
+
+                </div>
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Button onClick={this.onCancel.bind(this)}>Cancel</Button>
+                        <Button onClick={this.onConfirm.bind(this)} intent={Intent.DANGER}>Close</Button>
+                    </div>
+                </div>
+            </Dialog>
 
         }
     }
@@ -282,7 +299,7 @@ Observo.onMount((imports) => {
         }
         componentDidMount() {
             //alert(this.props.uuid)
-            let socketObject = imports.api.socket.use(null)
+            let socketObject = imports.api.socket.use()
             this.socketObject = socketObject
             console.log(socketObject)
             socketObject.on("connect", () => {
@@ -436,7 +453,7 @@ Observo.onMount((imports) => {
             }
         }
         renderEntryList() {
-  
+
             let list = []
             let entries = this.state.entryList
             let loop = 0
@@ -485,8 +502,8 @@ Observo.onMount((imports) => {
 
                 </Layout.Grid>
                 <Layout.Grid col style={{ paddingTop: 10 }} >
-                    <Layout.Grid background="white" className="center" style={{padding: 10}} width="100%" height={30}>
-                            <p>{this.state.username}</p>
+                    <Layout.Grid background="white" className="center" style={{ padding: 10 }} width="100%" height={30}>
+                        <p>{this.state.username}</p>
                     </Layout.Grid>
                 </Layout.Grid>
             </Layout.Grid>)
@@ -534,7 +551,7 @@ Observo.onMount((imports) => {
                             {items}
                         </Layout.Grid>
                     </Layout.Grid>
-                    <Layout.Grid row className="scrollY"  style={{ overflowY: 'auto', overflow: "overlay", height: 0, paddingLeft: 30,  borderTop: "2px solid gray" }}>
+                    <Layout.Grid row className="scrollY" style={{ overflowY: 'auto', overflow: "overlay", height: 0, paddingLeft: 30, borderTop: "2px solid gray" }}>
                         {this.renderEntryList()}
                     </Layout.Grid>
                 </Layout.Grid>
@@ -546,14 +563,16 @@ Observo.onMount((imports) => {
             if (this.state.editing) {
                 navStyle = { background: "lightgray" }
             }
-            return <Layout.Grid row>
-                <QuitQuestion isOpen={this.props.onClose} onClose={this.props.close} icon="cross">
-                    <p>
-                        Are you sure you wanna exit data collection?
-                        All data enter will be gone forever
-                    </p>
-                </QuitQuestion>
+            return <Layout.Grid row style={{ position: "relative" }}>
                 <Layout.Grid>
+
+                    <QuitQuestion isOpen={this.props.onClose} onClose={this.props.close} icon="cross">
+                        <p>
+                            Are you sure you wanna exit data collection? <br />
+                            All current data in entry fields will be lost.
+                         </p>
+                    </QuitQuestion>
+
                     <Navbar style={navStyle}>
                         <Navbar.Group align={Alignment.LEFT}>
                             {/* controlled mode & no panels (see h1 below): */}
@@ -573,12 +592,15 @@ Observo.onMount((imports) => {
                     </Navbar>
                 </Layout.Grid>
                 <Layout.Grid>
+                    {this.props.uuid}
                     {this.renderEditor()}
                     {this.renderEntry()}
                 </Layout.Grid>
             </Layout.Grid>
         }
     }
+
+    //Page loaded into core
     imports.api.page.register(EntryMain)
 
 })

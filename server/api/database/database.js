@@ -28,9 +28,9 @@ const connect = (database = null) => {
 //Lazy workaround to close connection after a query
 let db = (db) => {
     let data = {
-        query: (sql, callback) => {
+        query: (sql, array, callback) => {
             let connection = connect(db)
-            connection.query(sql, (err, result, field) => {
+            connection.query(sql, array, (err, result, field) => {
                 callback(err, result, field)
                 connection.end()
             })
@@ -78,7 +78,7 @@ class Database {
 
     }
     isUser(username, callback) {
-        db("data").query(`SELECT * FROM users WHERE (username="${username}")`, function (err, results, fields) {
+        db("data").query(`SELECT * FROM users WHERE (username="${username}")`, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(true)
@@ -88,7 +88,7 @@ class Database {
         })
     }
     isUserByID(uuid, callback) {
-        db("data").query(`SELECT * FROM users WHERE (uuid="${uuid}")`, function (err, results, fields) {
+        db("data").query(`SELECT * FROM users WHERE (uuid="${uuid}")`, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(true)
@@ -105,7 +105,7 @@ class Database {
      */
     vailidateUser(uuid, sessionKey, callback) {
         console.log("VAILIDATING")
-        db("data").query(`SELECT * FROM users WHERE (uuid="${uuid}" AND sessionKey="${sessionKey}")`, function (err, results, fields) {
+        db("data").query(`SELECT * FROM users WHERE (uuid="${uuid}" AND sessionKey="${sessionKey}")`, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(true)
@@ -122,7 +122,7 @@ class Database {
     signInViaKey(authKey, sessionKey, callback) {
         let me = this
         if (authKey != null) {
-            db("data").query(`SELECT * FROM users WHERE (authKey="${authKey}")`, function (err, results, fields) {
+            db("data").query(`SELECT * FROM users WHERE (authKey="${authKey}")`, [], function (err, results, fields) {
                 if (err) console.log(err)
                 if (results.length > 0) {
                     me.updateSessionKey(sessionKey, results[0].uuid)
@@ -150,7 +150,7 @@ class Database {
     signIn(username, password, sessionKey, callback) {
         let me = this
         password = md5(password)
-        db("data").query(`SELECT * FROM users WHERE (username="${username}") AND (password="${password}") `, function (err, results, fields) {
+        db("data").query(`SELECT * FROM users WHERE (username="${username}") AND (password="${password}") `, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 me.updateSessionKey(sessionKey, results[0].uuid)
@@ -177,7 +177,7 @@ class Database {
         password = md5(password)
         let query = `INSERT INTO users (id, uuid, sessionKey, authKey, username, password, role, permissions, avatar, color) VALUES (NULL, '${uuid}', '${sessionKey}', '-', '${username}', '${password}', '0', '-', '-', 'black')`
         console.log(query)
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
         })
         let authKey = this.newAuthKey(uuid)
@@ -200,7 +200,7 @@ class Database {
      */
     updateSessionKey(sessionKey, uuid) {
         let query = `UPDATE users SET sessionKey = '${sessionKey}' WHERE uuid = '${uuid}'`
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
         })
     }
@@ -211,7 +211,7 @@ class Database {
     newAuthKey(uuid) {
         let authKey = uuidv4()
         let query = `UPDATE users SET authKey = '${authKey}' WHERE uuid = '${uuid}'`
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
         })
         return authKey
@@ -226,7 +226,7 @@ class Database {
         let authKey = uuidv4()
         let query = `SELECT * FROM users WHERE (uuid="${uuid}")`
         console.log(query)
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 if (results[0].role >= role) {
@@ -244,7 +244,7 @@ class Database {
     isRole(name, callback) {
         let query = `SELECT * FROM roles WHERE (name="${name}")`
 
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(true)
@@ -256,7 +256,7 @@ class Database {
     addRole(name, color, callback) {
         let uuid = uuidv4()
         let query = `INSERT INTO roles (uuid, name, color, permissions) VALUES ('${uuid}', '${name}', '${color}', '{}')`
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
             callback()
         })
@@ -264,7 +264,7 @@ class Database {
     getRoles(callback) {
         let query = `SELECT * FROM roles`
         console.log(query)
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(results)
@@ -295,7 +295,7 @@ class Database {
      */
     listProjects(callback) {
         let query = `SELECT * FROM projects`
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(results)
@@ -312,7 +312,7 @@ class Database {
     //TODO: Change to UUID
     isProject(uuid, callback) {
         let query = `SELECT * FROM projects WHERE (uuid="${uuid}")`
-        db("data").query(query, function (err, results, fields) {
+        db("data").query(query, [], function (err, results, fields) {
             if (err) console.log(err)
             if (results.length > 0) {
                 callback(true)
@@ -325,12 +325,12 @@ class Database {
     getProject(uuid, callback) {
         this.isProject(uuid, () => {
             let query = `SELECT * FROM projects WHERE (uuid="${uuid}")`
-            db("data").query(query, function (err, results, fields) {
+            db("data").query(query, [], function (err, results, fields) {
                 if (err) console.log(err)
                 if (results.length > 0) {
                     let projectData = results[0]
                     query = `SELECT * FROM pages`
-                    db(`_${uuid.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+                    db(`_${uuid.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
                         if (err) console.log(err)
                         if (results.length > 0) {
                             callback(projectData, results)
@@ -347,11 +347,11 @@ class Database {
     getPagesFromProject(uuid, plugin, callback) {
         this.isProject(uuid, () => {
             let query = `SELECT * FROM projects WHERE (uuid="${uuid}")`
-            db("data").query(query, function (err, results, fields) {
+            db("data").query(query, [], function (err, results, fields) {
                 if (err) console.log(err)
                 if (results.length > 0) {
                     query = `SELECT * FROM pages WHERE (plugin="${plugin}")`
-                    db(`_${uuid.replace(/-/ig, "")}`).query(query, function (err, _results, fields) {
+                    db(`_${uuid.replace(/-/ig, "")}`).query(query, [], function (err, _results, fields) {
                         if (err) console.log(err)
                         if (_results.length > 0) {
                             callback(_results)
@@ -368,7 +368,7 @@ class Database {
     isPage(project, page, callback) {
         this.isProject(project, () => {
             let query = `SELECT * FROM pages WHERE (uuid="${page}")`
-            db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+            db(`_${project.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
                 if (err) console.log(err)
                 if (results.length > 0) {
                     callback(true)
@@ -381,7 +381,7 @@ class Database {
     isPageByPlugin(project, plugin, callback) {
         this.isProject(project, () => {
             let query = `SELECT * FROM pages WHERE (plugin="${plugin}")`
-            db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+            db(`_${project.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
                 if (err) console.log(err)
                 if (results.length > 0) {
                     callback(true)
@@ -394,10 +394,10 @@ class Database {
     addPageToProject(project, plugin, name) {
         let uuid = uuidv4()
         let query = `INSERT INTO pages (uuid, plugin, name, timestamp) VALUES ('${uuid}', '${plugin}', '${name}', current_timestamp())`
-        db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+        db(`_${project.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
             if (err) console.log(err)
-            query = "CREATE TABLE `_" + uuid.replace(/-/ig, "") +  "` (`id` int(11) NOT NULL AUTO_INCREMENT,`uuid` varchar(100) NOT NULL,`type` varchar(100) NOT NULL,`data` text NOT NULL,`timestamp` timestamp NOT NULL DEFAULT current_timestamp(),PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1"
-            db(`_${project.replace(/-/ig, "")}`).query(query, function (err, results, fields) {
+            query = "CREATE TABLE `_" + uuid.replace(/-/ig, "") +  "` (`id` int(11) NOT NULL AUTO_INCREMENT,`uuid` varchar(100) NOT NULL,`type` varchar(100) NOT NULL,`data` longtext NOT NULL,`timestamp` timestamp NOT NULL DEFAULT current_timestamp(),PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4"
+            db(`_${project.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
                 if (err) console.log(err)   
             })
         })
@@ -429,7 +429,7 @@ class Database {
             if (!state) {
                 let query = `INSERT INTO projects (plugins, name, user_uuid, created, last_edited, archived) VALUES ('${plugins}', '${projectName}', '${uuid}', CURRENT_TIME(), CURRENT_TIME(), '0')`
                 console.log(query)
-                this.sql.query(query, function (err, results, fields) {
+                this.sql.query(query, [], function (err, results, fields) {
                     if (err) console.log(err)
                 })
                 let replaceAll = function (str, find, replace) {
@@ -481,8 +481,9 @@ Observo.register(null, {
             custom.insert = (type, data, callback) => {
                 if (isPage) {
                     let uuid = uuidv4()
-                    let query = `INSERT INTO ${pageTable} (uuid, type, data) VALUES ('${uuid}', '${type}', '${data}')`
-                    db(projectDatabase).query(query, function (err, results, fields) {
+                    let query = `INSERT INTO ${pageTable} (uuid, type, data) VALUES ('${uuid}', '${type}', ?)`
+                    console.log(query)
+                    db(projectDatabase).query(query, [data], function (err, results, fields) {
                         if (err) console.log(err)
                         callback(uuid)
                     })
@@ -490,8 +491,8 @@ Observo.register(null, {
             }
             custom.update = (uuid, data, callback) => {
                 if (isPage) {
-                    let query = `UPDATE ${pageTable} SET data = '${data}' WHERE uuid = '${uuid}'`
-                    db(projectDatabase).query(query, function (err, results, fields) {
+                    let query = `UPDATE ${pageTable} SET data = ? WHERE uuid = '${uuid}'`
+                    db(projectDatabase).query(query, [data], function (err, results, fields) {
                         if (err) console.log(err)
                         callback()
                     })
@@ -499,8 +500,8 @@ Observo.register(null, {
             }
             custom.updateAll = (type, data, callback) => {
                 if (isPage) {
-                    let query = `UPDATE ${pageTable} SET data = '${data}' WHERE type = '${type}'`
-                    db(projectDatabase).query(query, function (err, results, fields) {
+                    let query = `UPDATE ${pageTable} SET data = ? WHERE type = '${type}'`
+                    db(projectDatabase).query(query, [data], function (err, results, fields) {
                         if (err) console.log(err)
                         callback()
                     })
@@ -517,7 +518,7 @@ Observo.register(null, {
                 }
                 if (isPage) {
                     let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") ${orderBy}`
-                    db(projectDatabase).query(query, function (err, results, fields) {
+                    db(projectDatabase).query(query, [], function (err, results, fields) {
                         callback(results)
                     })
                 } else {
@@ -527,7 +528,7 @@ Observo.register(null, {
             custom.isType = (type, callback) => {
                 if (isPage) {
                     let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") `
-                    db(projectDatabase).query(query, function (err, results, fields) {
+                    db(projectDatabase).query(query, [], function (err, results, fields) {
                         if (results.length > 0) {
                             callback(true)
                         } else {
@@ -543,7 +544,7 @@ Observo.register(null, {
                 if (isPage) {
                     let query = `SELECT * FROM ${pageTable}`
                     let types = []
-                    db(projectDatabase).query(query, function (err, results, fields) {
+                    db(projectDatabase).query(query, [], function (err, results, fields) {
                         for (let result in results) {
                             if (!type.includes[results[result].type]) {
                                 type.push(results[result].type)

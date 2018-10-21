@@ -13,7 +13,10 @@ let allowedRequire = [
     "react-ace",
     "@convergence/ace-collab-ext",
     "moment",
-    "react-big-calendar"
+    "react-big-calendar",
+    "react-autosuggest", 
+    "autosuggest-highlight/parse",
+    "autosuggest-highlight/match"
 ]
 
 

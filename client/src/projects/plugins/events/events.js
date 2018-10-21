@@ -7,16 +7,215 @@ Observo.onMount((imports) => {
     let { Layout } = require("@importcore/crust")
     let React = require("react")
     let ReactDOM = require("react-dom")
-    let { Tab, Tabs, ProgressBar, Alignment, Navbar, Button, InputGroup, Alert, Intent, MenuItem, Classes } = require("@blueprintjs/core")
-    let { Suggest } = require("@blueprintjs/select")
+    let { Tab, Tabs, ProgressBar, Alignment, Navbar, Button, InputGroup, Alert, Intent, MenuItem, Classes, Dialog, Switch } = require("@blueprintjs/core")
+    let { DateRangeInput } = require("@blueprintjs/datetime")
     let uuidV4 = require("uuid/v4")
     let BigCalendar = require("react-big-calendar")
     let moment = require("moment")
-
-
+    let Autosuggest = require("react-autosuggest")
+    let AutosuggestHighlightMatch = require('autosuggest-highlight/match')
+    let AutosuggestHighlightParse = require('autosuggest-highlight/parse')
     const localizer = BigCalendar.momentLocalizer(moment)
 
 
+
+
+    class EventQuestion extends React.Component {
+        constructor() {
+            super()
+            this.state = {
+                disabled: true,
+                event: null
+            }
+        }
+        onCancel() {
+            if (this.props.onClose) {
+                this.props.onClose(false)
+            }
+        }
+        onConfirm() {
+            if (this.props.onClose) {
+                this.props.onClose(true)
+            }
+        }
+        render() {
+            return <Dialog
+                intent={Intent.DANGER}
+                canEscapeKeyClose={false}
+                canOutsideClickClose={false}
+                title="hello"
+
+                isOpen={this.props.isOpen}
+                usePortal={false}
+            >
+                <div className={Classes.DIALOG_BODY}>
+                    <p>
+                        Please wait while the events are fetched...
+                    </p>
+
+                </div>
+                <div className={Classes.DIALOG_FOOTER}>
+                    <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Button onClick={this.onConfirm.bind(this)} intent={Intent.SUCCESS} disabled={this.state.disabled}>Okay</Button>
+                    </div>
+                </div>
+            </Dialog>
+
+        }
+    }
+
+
+    class EventSuggest extends React.Component {
+        constructor() {
+            super()
+
+            this.state = {
+                value: '',
+                suggestions: [],
+                events: []
+            }
+        }
+        getSuggestions(value) {
+            const escapedValue = this.escapeRegexCharacters(value.trim())
+
+            if (escapedValue === '') {
+                return []
+            }
+
+            const regex = new RegExp('\\b' + escapedValue, 'i')
+
+            return this.props.events.filter(event => regex.test(this.getSuggestionValue(event)))
+        }
+        escapeRegexCharacters(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        }
+        getSuggestionValue(suggestion) {
+            if (suggestion.district != null) {
+                return `${suggestion.city} ${suggestion.country} ${suggestion.event_code} ${suggestion.name} ${suggestion.district.abbreviation} `
+            }
+            return `${suggestion.city} ${suggestion.country} ${suggestion.event_code} ${suggestion.name}`
+        }
+        getSuggestionValueSimple(suggestion) {
+            return `${suggestion.name}|${suggestion.event_code}`
+        }
+        renderSuggestion(suggestion, { query }) {
+            let renderCity = () => {
+                let suggestionText = `${suggestion.city}, ${suggestion.country}`
+                let matches = AutosuggestHighlightMatch(suggestionText, query)
+                let parts = AutosuggestHighlightParse(suggestionText, matches)
+                return <span>
+                    {
+                        parts.map((part, index) => {
+                            const className = part.highlight ? 'highlight' : null
+
+                            return (
+                                <span className={className} key={index}>{part.text}</span>
+                            )
+                        })
+                    }
+                </span>
+            }
+            let renderName = () => {
+                let suggestionText = `${suggestion.name}`
+                let matches = AutosuggestHighlightMatch(suggestionText, query)
+                let parts = AutosuggestHighlightParse(suggestionText, matches)
+                return <span>
+                    {
+                        parts.map((part, index) => {
+                            const className = part.highlight ? 'highlight' : null
+
+                            return (
+                                <span className={className} key={index}>{part.text}</span>
+                            )
+                        })
+                    }
+                </span>
+            }
+            let renderCode = () => {
+                let suggestionText = `${suggestion.event_code}`
+                let matches = AutosuggestHighlightMatch(suggestionText, query)
+                let parts = AutosuggestHighlightParse(suggestionText, matches)
+                return <span>
+                    {
+                        parts.map((part, index) => {
+                            const className = part.highlight ? 'highlight' : null
+
+                            return (
+                                <span className={className} key={index}>{part.text}</span>
+                            )
+                        })
+                    }
+                </span>
+            }
+
+            return (
+                <span className='suggestion-content'>
+                    <Layout.Grid row>
+                        <Layout.Grid style={{ fontSize: 20 }}>{renderName()}</Layout.Grid>
+                        <Layout.Grid height={20} col>
+                            <Layout.Grid width="40%" className="center" style={{ color: "gray" }}>
+                                {renderCode()}
+                            </Layout.Grid>
+                            <Layout.Grid width="60%" style={{ fontWeight: "italics", fontSize: 14 }}>
+                                {renderCity()}
+                            </Layout.Grid>
+                        </Layout.Grid>
+                    </Layout.Grid>
+                </span >
+            )
+        }
+        onChange(event, { newValue, method }) {
+            if (method == "click") {
+                let data = newValue.split("|")
+                this.props.usingEvent(data[1])
+                this.setState({
+                    value: data[0]
+                })
+
+            } else {
+                this.setState({
+                    value: newValue
+                })
+            }
+
+
+        }
+
+        onSuggestionsFetchRequested({ value }) {
+            this.setState({
+                suggestions: this.getSuggestions(value)
+            })
+        }
+
+        onSuggestionsClearRequested() {
+            this.setState({
+                suggestions: []
+            })
+        }
+
+        render() {
+            const { value, suggestions } = this.state
+            const inputProps = {
+                placeholder: "Search Events",
+                value,
+                onChange: this.onChange.bind(this),
+                style: {
+                    width: 280,
+                    height: 52
+                }
+            }
+
+            return (
+                <Autosuggest
+                    suggestions={this.state.suggestions}
+                    onSuggestionsFetchRequested={this.onSuggestionsFetchRequested.bind(this)}
+                    onSuggestionsClearRequested={this.onSuggestionsClearRequested.bind(this)}
+                    getSuggestionValue={this.getSuggestionValueSimple}
+                    renderSuggestion={this.renderSuggestion}
+                    inputProps={inputProps} />
+            )
+        }
+    }
 
     class Events extends React.Component {
         constructor() {
@@ -30,7 +229,9 @@ Observo.onMount((imports) => {
                         end: new Date(moment().add(1, "days")),
                         title: "Some title"
                     }
-                ]
+                ],
+                startDate: new Date(moment()),
+                endDate: new Date(moment().add(1, "days")),
             }
         }
         componentWillReceiveProps(nextProps) {
@@ -42,11 +243,21 @@ Observo.onMount((imports) => {
             let socketObject = imports.api.socket.use(null)
             this.socketObject = socketObject
             socketObject.on("connect", () => {
-                console.log("connecting")
                 imports.api.auth.use(socketObject)
                 imports.api.auth.vaild(socketObject, () => {
-                    //alert("vaild user")
+                    imports.api.page.usePage(socketObject, this.props.uuid)
+                    socketObject.on("events_hasTeams", ({ hasTeams }) => {
+                        if (!hasTeams) {
+                            console.log("DOES NOT HAVE TEAMS YET")
+                            this.setState({ hasTeams: false })
+                        }
+                    })
+                    socketObject.on("events_updateTeams", ({ events }) => {
+                        console.log(events)
+                        this.setState({ events, hasTeams: true })
+                    })
                 })
+                this.socketObject.emit("events_updateTeams")
             })
         }
         async handleNavbarTabChange(navbarTabId) {
@@ -54,35 +265,96 @@ Observo.onMount((imports) => {
         }
         async onAddClick() {
             if (this.state.addingEvent) {
-                this.setState({ addingEvent: false })
+                //this.setState({ addingEvent: false })
+
             } else {
-                this.setState({ addingEvent: true })
+                //this.setState({ addingEvent: true })
+
+            }
+        }
+        async onRangeChange(data) {
+            this.setState({startDate: data[0], endDate: data[1]})
+        }
+        async onUsingEvent(code) {
+            for (let e in this.state.events) {
+                let event = this.state.events[e]
+                if (event.event_code == code) {
+                    this.setState({ startDate: new Date(event.start_date + " EST"), endDate: new Date(event.end_date + " EST") })
+                }
             }
         }
         renderTabs() {
-            if (!this.state.addingEvent) {
-                return <Tabs
-                    animate={false}
-                    id="navbar"
-                    large={true}
-                    onChange={this.handleNavbarTabChange.bind(this)}
-                    selectedTabId={this.state.navbarTabId}
+            return <Tabs
+                animate={false}
+                id="navbar"
+                large={true}
+                onChange={this.handleNavbarTabChange.bind(this)}
+                selectedTabId={this.state.navbarTabId}
 
-                >
-                    <Tab id="events" title="Events" ></Tab>
-                    <Tab id="calendar" title="Calendar" ></Tab>
-                </Tabs>
-            }
+            >
+                <Tab id="events" title="Events" ></Tab>
+                <Tab id="calendar" title="Calendar" ></Tab>
+            </Tabs>
+
         }
         renderEvents() {
-            if (!this.state.addingEvent && this.state.navbarTabId == "events") {
-                return <div style={{ "display": "flex", "flexDirection": "column", "flex": "1", "height": "100%" }}>
-                    <p style={{ margin: "auto", fontWeight: "bold", fontSize: 50 }}>No events found.</p>
-                </div>
+            if (this.state.navbarTabId == "events") {
+                return <Layout.Grid col>
+                    <Layout.Grid>
+                        <div style={{ "display": "flex", "flexDirection": "column", "flex": "1", "height": "100%" }}>
+                            <p style={{ margin: "auto", fontWeight: "bold", fontSize: 50 }}>No events found.</p>
+                        </div>
+                    </Layout.Grid>
+                    <Layout.Grid row background="lightgray">
+                        <Layout.Grid className="center" width="100%" style={{ margin: 10, padding: 10 }}>
+                            <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Add Event</p>
+                        </Layout.Grid>
+                        <Layout.Grid col>
+                            <Layout.Grid row width={300}>
+                                <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
+                                    <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Event Name</p>
+                                </Layout.Grid>
+                                <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
+                                    <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Event Time</p>
+                                </Layout.Grid>
+                                <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
+                                    <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Auto Start?</p>
+                                </Layout.Grid>
+                            </Layout.Grid>
+                            <Layout.Grid row>
+                                <Layout.Grid style={{ margin: 10 }} height={70}>
+                                    <EventSuggest events={this.state.events} usingEvent={this.onUsingEvent.bind(this)} />
+                                </Layout.Grid>
+                                <Layout.Grid style={{ margin: 10 }} height={70}>
+                                    <DateRangeInput
+                                        maxDate={new Date("12/31/2038")}
+                                        endInputProps={{
+                                            style: {
+                                                height: 52
+                                            }
+                                        }}
+                                        startInputProps={{
+                                            style: {
+                                                height: 52
+                                            }
+                                        }}
+                                        value={[this.state.startDate, this.state.endDate]}
+                                        onChange={this.onRangeChange.bind(this)}
+                                        formatDate={date => date.toLocaleString()}
+                                        parseDate={str => new Date(str)}
+                                    />
+                                </Layout.Grid>
+                                <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
+                                    <Switch large label="Event is activated when the time is equal." />
+                                </Layout.Grid>
+                            </Layout.Grid>
+                        </Layout.Grid>
+                    </Layout.Grid>
+                </Layout.Grid>
             }
         }
         renderCalendar() {
-            if (!this.state.addingEvent && this.state.navbarTabId == "calendar") {
+            if (this.state.navbarTabId == "calendar") {
                 return <Layout.Grid background="white">
                     <BigCalendar
                         localizer={localizer}
@@ -95,26 +367,33 @@ Observo.onMount((imports) => {
         }
         renderAddEvent() {
             if (this.state.addingEvent) {
-                return <p>helo</p>
+                return <EventCreator events={this.state.events} socket={this.socketObject} />
             }
         }
         render() {
-            return <Layout.Grid row>
+            return <Layout.Grid row style={{ position: "relative" }}>
+                <EventQuestion isOpen={!this.state.hasTeams}>
+                    <p>
+                        Are you sure you wanna exit data collection? <br />
+                        All current data in entry fields will be lost.
+                     </p>
+                </EventQuestion>
                 <Layout.Grid>
+
+
                     <Navbar style={{ background: "gray" }}>
                         <Navbar.Group align={Alignment.LEFT}>
                             {/* controlled mode & no panels (see h1 below): */}
                             {this.renderTabs()}
                         </Navbar.Group>
                         <Navbar.Group align={Alignment.RIGHT}>
-                            <Button className="pt-minimal" icon="add" onClick={this.onAddClick.bind(this)} />
+                            <Button className="pt-minimal" icon="cog" />
                         </Navbar.Group>
                     </Navbar>
                 </Layout.Grid>
                 <Layout.Grid>
                     {this.renderEvents()}
                     {this.renderCalendar()}
-                    {this.renderAddEvent()}
                 </Layout.Grid>
             </Layout.Grid>
         }

@@ -2,7 +2,10 @@
 let localEvents = new EventEmitter()
 Observo.onMount((imports) => {
     let pages = {}
+    imports.api.database.hasDefaultPage()
+    //localhost:300/plugins/entry <-- auth UUID, PROJECT
     imports.api.socket.addHandler((global, client, uuid, project) => {
+        //
         imports.api.page.usePage(global, client, (global, client, page) => {
             let db = imports.api.database.connect(project, page, async () => {
                 db.fetchByType("OUTLINE", async (results) => {
@@ -29,6 +32,7 @@ Observo.onMount((imports) => {
                         let entry = data.entry
                         entries[_uuid] = { entry, name }
                     }
+                    console.log(results)
                     global.emit("entry_listUpdate", entries)
                     localEvents.emit("entry_listUpdate", entries)
                 }, {

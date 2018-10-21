@@ -1,7 +1,5 @@
 //Example (Client) Page
 
-//import { Layout } from "@importcore/crust" 
-let { Layout } = require("@importcore/crust")
 class LoadedPages {
     constructor() {
         this.pages = {}

@@ -14,7 +14,7 @@ import events from 'events'
 require("babel-polyfill")
 
 //TODO: REMOVE AS ITS DEBUG
-stash.set('serverList', { "butter": { name: "Butter", ip: "---------" },"local": { name: "local", ip: "localhost:3000" } });
+stash.set('serverList', { "butter": { name: "Butter", ip: "76915f67.ngrok.io" },"local": { name: "local", ip: "localhost:3000" } });
 
 
 
