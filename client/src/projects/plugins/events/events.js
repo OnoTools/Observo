@@ -165,17 +165,23 @@ Observo.onMount((imports) => {
             )
         }
         onChange(event, { newValue, method }) {
-            if (method == "click") {
+            console.log(method)
+            if (method != "type") {
                 let data = newValue.split("|")
                 this.props.usingEvent(data[1])
                 this.setState({
                     value: data[0]
                 })
-
+                if (this.props.onChange) {
+                    this.props.onChange(data[0])
+                }
             } else {
                 this.setState({
                     value: newValue
                 })
+                if (this.props.onChange) {
+                    this.props.onChange(newValue)
+                }
             }
 
 
@@ -223,6 +229,7 @@ Observo.onMount((imports) => {
             this.state = {
                 navbarTabId: "events",
                 addingEvent: false,
+                createdEvents: [],
                 events: [
                     {
                         start: new Date(),
@@ -250,14 +257,19 @@ Observo.onMount((imports) => {
                         if (!hasTeams) {
                             console.log("DOES NOT HAVE TEAMS YET")
                             this.setState({ hasTeams: false })
+                            socketObject.emit("events_updateTeams")
                         }
                     })
                     socketObject.on("events_updateTeams", ({ events }) => {
                         console.log(events)
                         this.setState({ events, hasTeams: true })
                     })
+                    socketObject.on("events_listUpdate", (events) => {
+                        console.log(events)
+                        this.setState({ createdEvents: events })
+                    })
                 })
-                this.socketObject.emit("events_updateTeams")
+
             })
         }
         async handleNavbarTabChange(navbarTabId) {
@@ -273,7 +285,7 @@ Observo.onMount((imports) => {
             }
         }
         async onRangeChange(data) {
-            this.setState({startDate: data[0], endDate: data[1]})
+            this.setState({ startDate: data[0], endDate: data[1] })
         }
         async onUsingEvent(code) {
             for (let e in this.state.events) {
@@ -282,6 +294,14 @@ Observo.onMount((imports) => {
                     this.setState({ startDate: new Date(event.start_date + " EST"), endDate: new Date(event.end_date + " EST") })
                 }
             }
+        }
+        async onCreateEvent() {
+            let data = {
+                startDate: this.state.startDate,
+                endDate: this.state.endDate,
+                name: this.state.eventName,
+            }
+            this.socketObject.emit("events_addEvent", data)
         }
         renderTabs() {
             return <Tabs
@@ -297,33 +317,45 @@ Observo.onMount((imports) => {
             </Tabs>
 
         }
+        renderProjectEvents() {
+            if (this.state.createdEvents.length > 0) {
+                let items = []
+                for (let e in this.state.createdEvents) {
+                    let event = this.state.createdEvents[e]
+                    items.push (<Layout.Grid width="100%" style={{padding: 20, margin: 20}} background="white">
+                        <p>{event.name}</p>
+                    </Layout.Grid>)
+                }
+                return items
+
+            } else {
+                return <div style={{ "display": "flex", "flexDirection": "column", "flex": "1", "height": "100%" }}>
+                    <p style={{ margin: "auto", fontWeight: "bold", fontSize: 50 }}>No events found.</p>
+                </div>
+            }
+        }
         renderEvents() {
             if (this.state.navbarTabId == "events") {
-                return <Layout.Grid col>
+                return <Layout.Grid col height="100%">
                     <Layout.Grid>
-                        <div style={{ "display": "flex", "flexDirection": "column", "flex": "1", "height": "100%" }}>
-                            <p style={{ margin: "auto", fontWeight: "bold", fontSize: 50 }}>No events found.</p>
-                        </div>
+                      {this.renderProjectEvents()}
                     </Layout.Grid>
-                    <Layout.Grid row background="lightgray">
+                    <Layout.Grid row background="lightgray" width={600}>
                         <Layout.Grid className="center" width="100%" style={{ margin: 10, padding: 10 }}>
                             <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Add Event</p>
                         </Layout.Grid>
                         <Layout.Grid col>
-                            <Layout.Grid row width={300}>
+                            <Layout.Grid row width={200}>
                                 <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
                                     <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Event Name</p>
                                 </Layout.Grid>
                                 <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
                                     <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Event Time</p>
                                 </Layout.Grid>
-                                <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
-                                    <p className="center" style={{ fontWeight: "bold", fontSize: "18", textAlign: "center", width: "100%" }}>Auto Start?</p>
-                                </Layout.Grid>
                             </Layout.Grid>
                             <Layout.Grid row>
                                 <Layout.Grid style={{ margin: 10 }} height={70}>
-                                    <EventSuggest events={this.state.events} usingEvent={this.onUsingEvent.bind(this)} />
+                                    <EventSuggest events={this.state.events} usingEvent={this.onUsingEvent.bind(this)} onChange={value => this.setState({ eventName: value })} />
                                 </Layout.Grid>
                                 <Layout.Grid style={{ margin: 10 }} height={70}>
                                     <DateRangeInput
@@ -344,10 +376,17 @@ Observo.onMount((imports) => {
                                         parseDate={str => new Date(str)}
                                     />
                                 </Layout.Grid>
-                                <Layout.Grid style={{ margin: 10, padding: 10 }} height={70}>
-                                    <Switch large label="Event is activated when the time is equal." />
-                                </Layout.Grid>
                             </Layout.Grid>
+                        </Layout.Grid>
+                        <Layout.Grid className="center" width="100%" style={{ margin: 10, padding: 10 }} col center>
+                            <div>
+                                <Button style={{
+                                    width: 280,
+                                    height: 52,
+                                    fontWeight: "bold",
+                                    fontSize: 24
+                                }} intent={Intent.SUCCESS} onClick={this.onCreateEvent.bind(this)}>Create Event</Button>
+                            </div>
                         </Layout.Grid>
                     </Layout.Grid>
                 </Layout.Grid>
@@ -355,10 +394,22 @@ Observo.onMount((imports) => {
         }
         renderCalendar() {
             if (this.state.navbarTabId == "calendar") {
+                let events = this.state.createdEvents
+                let calEvents = []
+                for (let e in events) {
+                    let event = events[e]
+                    let data = {
+                        title: event.name,
+                        start: event.startDate,
+                        end: event.endDate,
+                        allDay: true,
+                    }
+                    calEvents.push(data)
+                }
                 return <Layout.Grid background="white">
                     <BigCalendar
                         localizer={localizer}
-                        events={this.state.events}
+                        events={calEvents}
                         startAccessor="start"
                         endAccessor="end"
                     />

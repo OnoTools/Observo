@@ -32,7 +32,6 @@ Observo.onMount((imports) => {
                         let entry = data.entry
                         entries[_uuid] = { entry, name }
                     }
-                    console.log(results)
                     global.emit("entry_listUpdate", entries)
                     localEvents.emit("entry_listUpdate", entries)
                 }, {

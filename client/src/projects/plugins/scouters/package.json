@@ -5,6 +5,7 @@
     "consumes": [
         "api:socket",
         "api:page",
-        "api:require"
+        "api:require",
+        "api:auth"
     ]
 }

@@ -1,38 +1,51 @@
 var mysql = require("mysql")
 const uuidv4 = require('uuid/v4')
 const md5 = require("md5")
-const connect = (database = null) => {
-    let data //Makes the variable here
-    if (database != null) { //If no database is specified, it connects a default
-        data = {
-            host: "127.0.0.1",
-            user: "root",
-            password: "",
-            database: database
-        }
-    } else {
-        data = {
-            host: "127.0.0.1",
-            user: "root",
-            password: ""
-        }
+
+class DBConnect {
+    constructor() {
+        this.connections = {}
     }
-    //Make the connection
-    var con = mysql.createConnection(data)
-    //Conne
-    con.connect(function (err) {
-        if (err) throw err //If error occurs, it with throw it :24
-    })
-    return con //Retsurn that connection to whatever is calling it
+    makeConnection(database = null) {
+        let data //Makes the variable here
+        if (database != null) { //If no database is specified, it connects a default
+            data = {
+                host: "127.0.0.1",
+                user: "root",
+                password: "",
+                database: database
+            }
+        } else {
+            data = {
+                host: "127.0.0.1",
+                user: "root",
+                password: ""
+            }
+        }
+        //Make the connection
+        var con = mysql.createConnection(data)
+        //Conne
+        con.connect(function (err) {
+            if (err) throw err //If error occurs, it with throw it :24
+        })
+        return con //Retsurn that connection to whatever is calling it
+    }
+    connect(database) {
+        if (this.connections[database] == null) {
+            this.connections[database] = this.makeConnection(database)
+        } 
+        return this.connections[database]
+    }
 }
+let dbc = new DBConnect()
 //Lazy workaround to close connection after a query
 let db = (db) => {
     let data = {
         query: (sql, array, callback) => {
-            let connection = connect(db)
+            let connection = dbc.connect(db)
             connection.query(sql, array, (err, result, field) => {
                 callback(err, result, field)
-                connection.end()
+
             })
         }
     }
@@ -396,9 +409,9 @@ class Database {
         let query = `INSERT INTO pages (uuid, plugin, name, timestamp) VALUES ('${uuid}', '${plugin}', '${name}', current_timestamp())`
         db(`_${project.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
             if (err) console.log(err)
-            query = "CREATE TABLE `_" + uuid.replace(/-/ig, "") +  "` (`id` int(11) NOT NULL AUTO_INCREMENT,`uuid` varchar(100) NOT NULL,`type` varchar(100) NOT NULL,`data` longtext NOT NULL,`timestamp` timestamp NOT NULL DEFAULT current_timestamp(),PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4"
+            query = "CREATE TABLE `_" + uuid.replace(/-/ig, "") + "` (`id` int(11) NOT NULL AUTO_INCREMENT,`uuid` varchar(100) NOT NULL,`type` varchar(100) NOT NULL,`data` longtext NOT NULL,`timestamp` timestamp NOT NULL DEFAULT current_timestamp(),PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8"
             db(`_${project.replace(/-/ig, "")}`).query(query, [], function (err, results, fields) {
-                if (err) console.log(err)   
+                if (err) console.log(err)
             })
         })
     }
@@ -412,14 +425,15 @@ class Database {
             for (let result in results) {
                 let project = results[result]
                 this.isPageByPlugin(project.uuid, plugin, (result) => {
+                    console.log(result)
                     if (!result) {
-                        this.addPageToProject(project.uuid, plugin, "Default",)
-                    } 
+                        this.addPageToProject(project.uuid, plugin, "Default")
+                    }
                 })
             }
         })
-    } 
-    createPage(projectName, name) { 
+    }
+    createPage(projectName, name) {
     }
     /*
     addProject(projectName, uuid, callback) {
@@ -461,8 +475,8 @@ Observo.register(null, {
         getNameByUUID: (name, uuid, callback) => {
             manager.getNameByUUID(uuid, callback)
         },
-        getPagesFromProject: (name, uuid, plugin, callback) => {
-            manager.getPagesFromProject(uuid, plugin, callback)
+        getPagesFromProject: (name, uuid, callback) => {
+            manager.getPagesFromProject(uuid, name, callback)
         },
         hasDefaultPage: (name) => {
             manager.hasDefaultPage(name)
@@ -508,6 +522,7 @@ Observo.register(null, {
                 }
             }
             custom.fetchByType = (type, callback, options) => {
+                console.log("start")
                 let orderBy = ""
                 if (options) {
                     if (options.backwards != null) {
@@ -519,7 +534,9 @@ Observo.register(null, {
                 if (isPage) {
                     let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") ${orderBy}`
                     db(projectDatabase).query(query, [], function (err, results, fields) {
+                        console.log("end")
                         callback(results)
+
                     })
                 } else {
                     console.log("NOPE")
@@ -529,9 +546,13 @@ Observo.register(null, {
                 if (isPage) {
                     let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") `
                     db(projectDatabase).query(query, [], function (err, results, fields) {
-                        if (results.length > 0) {
-                            callback(true)
-                        } else {
+                        try {
+                            if (results.length > 0) {
+                                callback(true)
+                            } else {
+                                callback(false)
+                            }
+                        } catch (e) {
                             callback(false)
                         }
                     })
@@ -580,7 +601,7 @@ Observo.register(null, {
             }
             manager.isPage(project, page, () => {
                 isPage = true
-                callback(custom)
+                callback(name)
             })
             return custom
         }
