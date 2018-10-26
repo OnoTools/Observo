@@ -46,18 +46,29 @@ Observo.onMount((imports) => {
             //START
             if (projects[project] == null) {
                 projects[project] = {}
+                projects[project].clients = {}
                 projects[project].fetchedEvents = null
                 projects[project].fetchedMembers = null
                 projects[project].profession = {}
                 projects[project].profession.list = {}
                 projects[project].profession.editing = {}
-            }
 
+                projects[project].editor = {}
+                projects[project].editSettings = {}
+                projects[project].settings = {}
+
+                projects[project].selectedEvent = {}
+                projects[project].selectedDay = {}
+            }
+            projects[project].clients[uuid] = client
             //Connect to the database. Use it as the "on ready for the user"
             let db = imports.api.database.connect(project, page, () => {
                 updateProfessionList(false)
                 updateProfessionEditList(false)
-                updateMembersList(false)
+
+                //updateEditorSettings(false)
+                //updateEditorSheet(false)
+
             })
             //Check if events can be used from plugins:events. Only check once per project, then just store it in a variable. Saves database query attempts.
             if (projects[project].fetchedEvents == null) {
@@ -66,7 +77,7 @@ Observo.onMount((imports) => {
                     let data = {}
                     for (let e in events) {
                         let event = events[e]
-                        data[event.uuid] = event.name
+                        data[event.uuid] = { name: event.name, startDate: event.startDate, endDate: event.endDate }
                     }
                     projects[project].fetchedEvents = data
                     client.emit("scheduler_eventList", data)
@@ -77,7 +88,7 @@ Observo.onMount((imports) => {
                     let data = {}
                     for (let e in events) {
                         let event = events[e]
-                        data[event.uuid] = event.name
+                        data[event.uuid] = { name: event.name, startDate: event.startDate, endDate: event.endDate }
                     }
                     projects[project].fetchedEvents = data
                     client.emit("scheduler_eventList", data)
@@ -87,7 +98,8 @@ Observo.onMount((imports) => {
                 let data = projects[project].fetchedEvents
                 client.emit("scheduler_eventList", data)
             }
-            
+
+            //Members List
             if (projects[project].fetchedMembers == null) {
                 imports.plugins.team.getMembers(project, (members) => {
                     projects[project].fetchedMembers = members
@@ -192,6 +204,100 @@ Observo.onMount((imports) => {
                             console.log("UPDATED")
                             updateProfessionList(true) //If update successful, update member list with new name.
                         })
+                    }
+                }
+            })
+
+
+
+
+
+            let updateEditorSheet = (useGlobal) => {
+                if (useGlobal) {
+                    let event = projects[project].selectedEvent[uuid]
+                    let day = projects[project].selectedDay[uuid]
+                    let sheet = project[project].editor[event][day]
+                    //Loop through all clients, as we can't use global rn
+                    for (let c in projects[project].clients)
+                        //Check if this client has select a proper event (none by default, so they SHOULD)
+                        if (projects[project].selectedEvent[c] == event && projects[project].selectedDay[c] == day) {
+                            //If so grab the client in the variable
+                            let client = projects[project].clients[c]
+                            //Send the data to THAT client only (repeat if more client are on the same event and day)
+                            client.emit("scheduler_editor_updateSheet", { sheet })
+                        }
+                } else {
+                    let event = projects[project].selectedEvent[uuid]
+                    let day = projects[project].selectedDay[uuid]
+                    let sheet = project[project].editor[event][day]
+                    client.emit("scheduler_editor_updateSheet", { sheet })
+                }
+            }
+            let updateSettings = (useGlobal) => {
+
+            }
+
+
+            /**
+             * SelectEvent - What Event A User Selects and the day of that event
+             */
+            client.on("scheduler_editor_selectEvent", ({ event, day }) => {
+                //TODO: Check if this is a real event?
+                //TODO: Check if its a real day for this event
+                if (projects[project].selectedEvent[uuid] == null) {
+                    projects[project].selectedEvent[uuid] = {}
+                }
+                //Check if event has been used
+                if (projects[project].editor[event] == null) {
+                    projects[project].editor[event] = {}
+                    projects[project].editSettings[event] = {}
+                    projects[project].settings[event] = {}
+                }
+                //Check if DAY for that EVENT has been used
+                if (projects[project].editor[event][day] == null) {
+                    projects[project].editor[event][day] = {}
+                    projects[project].editor[event][day].members = {}
+                    projects[project].editSettings[event][day] = null
+                    projects[project].settings[event][day] = {
+                        unit: "match", //time
+                        interval: 16, //30
+                        start: 0, //8|30
+                        end: 80  //4|30
+                    }
+                    for (let m in projects[project].fetchedMembers) {
+                        let member = projects[project].fetchedMembers[m]
+                        projects[project].editor[event][day].members[member.uuid] = {}
+                        projects[project].editor[event][day].members[member.uuid].hide = false
+                        //projects[project].editor[event][day].outcome[0...].startColumns[] //Used for: Open Ceromnies, be in stands at 8:30, etc. Only text
+                        //projects[project].editor[event][day].outcome[0...].progressColumns[] //Base SYSTEM, for matchs and time. Only professions. Dynamically created based on SETTINGS for event and day. Rules are for the entire event
+                        //projects[project].editor[event][day].outcome[0...].endColumns[] //Used for: Clean up column.  Only text
+                        console.log("im here")
+                    }
+                }
+                projects[project].selectedEvent[uuid] = event
+                projects[project].selectedDay[uuid] = day
+                updateEdtiorSheet(false)
+                console.log(JSON.stringify(projects))
+            })
+            client.on("scheduler_editor_updateSettings", ({ settings }) => {
+                let event = projects[project].selectedEvent[uuid]
+                let day = projects[project].selectedDay[uuid]
+                projects[project].settings[event][day].unit = settings.unit
+                projects[project].settings[event][day].interval = settings.interval
+                projects[project].settings[event][day].start = settings.start
+                projects[project].settings[event][day].end = settings.end
+            })
+
+            client.on("scheduler_editor_editingSettings", () => {
+                let event = projects[project].selectedEvent[uuid]
+                let day = projects[project].selectedDay[uuid]
+                if (projects[project].editSettings[event][day] == null) {
+                    projects[project].editSettings[event][day] = uuid
+                    updateSettings(true)
+                } else {
+                    if (projects[project].editSettings[event][day] == uuid) {
+                        projects[project].editSettings[event][day] = null
+                        updateSettings(true)
                     }
                 }
             })

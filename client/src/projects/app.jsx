@@ -218,7 +218,7 @@ export default class App extends Component {
                 items.push(
                     <div key={tab} style={style}>
                         <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
-                            <CustomObject height={(this.state.areaHeight + this.api.page.services.API.getHeightOffset(openPlugin.plugin))} width={(this.state.areaWidth + this.api.page.services.API.getWidthOffset(openPlugin.plugin))} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
+                            <CustomObject locale="en" height={(this.state.areaHeight + this.api.page.services.API.getHeightOffset(openPlugin.plugin))} width={(this.state.areaWidth + this.api.page.services.API.getWidthOffset(openPlugin.plugin))} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
                         </ErrorBoundary>
 
                     </div>)

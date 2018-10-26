@@ -15,7 +15,6 @@
           "react"
         ],
         "plugins": [
-            "react-hot-loader/babel",
             "transform-async-to-generator",
             [
                 "babel-plugin-transform-require-ignore",
