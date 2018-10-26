@@ -77,7 +77,7 @@ class Sidebar extends Component {
                                 }
                                 //CHeck to see if the server plugin is dynamic, if so add caret and make it expanded
                                 if (serverPlug.package.settings.dynamic) {
-                                    lNode.isExpanded = true
+                                    //lNode.isExpanded = true
                                     //Now loop through all pages that may be used for this plugin
                                     for (let page in pages) {
                                         if (pages[page].plugin == pluginName) {

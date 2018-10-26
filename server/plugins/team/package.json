@@ -1,9 +1,9 @@
 {
-    "name": "scouters",
+    "name": "team",
     "version": "1.0.0",
     "main": "main.js",
     "settings": {
-        "title": "Scouters",
+        "title": "Team",
         "dynamic": false,
         "icon": "user"
     },

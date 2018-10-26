@@ -1,0 +1,12 @@
+{
+    "name": "scheduler",
+    "version": "1.0.0",
+    "main": "main.js",
+    "settings": {
+        "title": "Scheduler",
+        "dynamic": false,
+        "icon": "time"
+    },
+    "consumes": ["api:socket", "api:database", "api:page", "plugins:events", "plugins:team"]
+
+}

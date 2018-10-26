@@ -602,7 +602,7 @@ Observo.onMount((imports) => {
 
     //Page loaded into core
     imports.api.page.register(EntryMain)
-
+    imports.api.page.setOffset({height: -100, width: 0})
 })
 Observo.register(null, {
     GLOBAL: {},

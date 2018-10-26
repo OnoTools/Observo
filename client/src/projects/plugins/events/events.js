@@ -452,7 +452,7 @@ Observo.onMount((imports) => {
 
 
     imports.api.page.register(Events)
-
+    imports.api.page.setOffset({height: -100, width: 0})
 })
 Observo.register(null, {
     GLOBAL: {},

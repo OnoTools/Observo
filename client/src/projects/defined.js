@@ -191,8 +191,7 @@ class Manager extends EventEmitter {
                                 //Load the module (but do it as TEXT not as a require)
                                 require('fs').readFile(main, 'utf8', (err, data) => {
                                     if (err) { console.log("[Defined] Cannot load " + json.main + "!") }
-                                    //Now run the code
-                                    self.run(data, section, json.name, allowRequire)
+                                    else {self.run(data, section, json.name, allowRequire)}
                                 });
                             } else {
                                 console.log("[Loader] Has no 'main' file?")

@@ -1,0 +1,11 @@
+{
+    "name": "scheduler",
+    "version": "1.0.0",
+    "main": "scheduler.js",
+    "consumes": [
+        "api:socket",
+        "api:page",
+        "api:require",
+        "api:auth"
+    ]
+}

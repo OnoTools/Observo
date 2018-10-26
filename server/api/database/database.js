@@ -425,7 +425,6 @@ class Database {
             for (let result in results) {
                 let project = results[result]
                 this.isPageByPlugin(project.uuid, plugin, (result) => {
-                    console.log(result)
                     if (!result) {
                         this.addPageToProject(project.uuid, plugin, "Default")
                     }
@@ -522,7 +521,6 @@ Observo.register(null, {
                 }
             }
             custom.fetchByType = (type, callback, options) => {
-                console.log("start")
                 let orderBy = ""
                 if (options) {
                     if (options.backwards != null) {
@@ -534,7 +532,6 @@ Observo.register(null, {
                 if (isPage) {
                     let query = `SELECT * FROM ${pageTable} WHERE (type="${type}") ${orderBy}`
                     db(projectDatabase).query(query, [], function (err, results, fields) {
-                        console.log("end")
                         callback(results)
 
                     })

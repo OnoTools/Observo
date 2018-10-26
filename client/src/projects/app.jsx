@@ -177,14 +177,14 @@ export default class App extends Component {
          * of the children. It updates on resize, but can be buggy. Also uses a lot of chrome resources, which
          * I can not do much about :/
          */
-        let height = document.documentElement.clientHeight - 30 - 100
+        let height = document.documentElement.clientHeight - 30
         let width = document.documentElement.clientWidth - 200
         this.setState({ areaHeight: height, areaWidth: width })
         /**
          * ProjectWindow - The Electron Window Manager (window.js)
          */
         ProjectWindow.onResize(() => {
-            let height = document.documentElement.clientHeight - 30 - 100
+            let height = document.documentElement.clientHeight - 30
             let width = document.documentElement.clientWidth - 200
             this.setState({ areaHeight: height, areaWidth: width })
         })
@@ -203,7 +203,9 @@ export default class App extends Component {
             if (openPlugin != null) {
                 let style = { display: "none" }
                 if (tab == this.state.selectedTab) {
-                    style = { height: this.state.areaHeight, width: this.state.areaWidth }
+                    console.log(this.api.page.services.API.getHeightOffset(openPlugin.plugin))
+                    console.log(this.api.page.services.API.getWidthOffset(openPlugin.plugin))
+                    style = { height: (this.state.areaHeight + this.api.page.services.API.getHeightOffset(openPlugin.plugin)), width: (this.state.areaWidth + this.api.page.services.API.getWidthOffset(openPlugin.plugin))}
                 }
                 let CustomObject = this.api.page.services.API.getPage(openPlugin.plugin)
                 let closeTab = this.state.closeTab
@@ -216,7 +218,7 @@ export default class App extends Component {
                 items.push(
                     <div key={tab} style={style}>
                         <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
-                            <CustomObject height={this.state.areaHeight} width={this.state.areaWidth} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
+                            <CustomObject height={(this.state.areaHeight + this.api.page.services.API.getHeightOffset(openPlugin.plugin))} width={(this.state.areaWidth + this.api.page.services.API.getWidthOffset(openPlugin.plugin))} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
                         </ErrorBoundary>
 
                     </div>)

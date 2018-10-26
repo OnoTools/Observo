@@ -11,7 +11,7 @@ var EventEmitter = require('events').EventEmitter;
 const startTime = process.hrtime()
 class Logging {
     constructor() {
-       this.usePrefix = () => {return "Defined"}
+        this.usePrefix = () => { return "Defined" }
     }
     setPrefix(callback) {
         this.usePrefix = callback
@@ -140,7 +140,7 @@ class Manager extends EventEmitter {
         this.ready = false
         this.loading = false
         this.moduleList = []
-        this.transform = (c, n) => {return `//# sourceURL=${n.toUpperCase()}\n${c}`}
+        this.transform = (c, n) => { return `//# sourceURL=${n.toUpperCase()}\n${c}` }
     }
     /**
      * SetDefinedID - Sets the DEFINED namespace used in a plugin/api
@@ -199,9 +199,15 @@ class Manager extends EventEmitter {
                                 let main = dir + "/" + json.main
                                 //Load the module (but do it as TEXT not as a require)
                                 require('fs').readFile(main, 'utf8', (err, data) => {
-                                    if (err) { console.log("[Defined] Cannot load " + json.main + "!") }
+                                    if (err) {
+                                        console.log("[DML] Cannot load " + json.main + "!")
+                                        self.defined[section][json.name] = {}
+                                        self.defined[section][json.name].register = true
+                                       
+                                    }
+                                    else { self.run(data, section, json.name, allowRequire) }
                                     //Now run the code
-                                    self.run(data, section, json.name, allowRequire)
+
                                 });
                             } else {
                                 console.log("[Loader] Has no 'main' file?")
@@ -227,11 +233,11 @@ class Manager extends EventEmitter {
         let customConsole = {
             log: (message) => {
                 let a = ""
-                if (!this.ready) { 
+                if (!this.ready) {
                     a = "$E"
                 }
                 log.log(`${a}[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$f${message}`)}`)
-                
+
             },
             info: (message) => {
                 log.info(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$3${message}`)}`)
@@ -345,7 +351,7 @@ class Manager extends EventEmitter {
             this.pass = true
             let z = ""
             for (let m in this.moduleList) {
-                z = `${z}${ this.moduleList[m].toUpperCase()} `
+                z = `${z}${this.moduleList[m].toUpperCase()} `
             }
             log.log(`$DLoading ( ${z})`)
             this.emit('mount-imports'); //Mount all GLOBAL imports
@@ -374,7 +380,7 @@ class Manager extends EventEmitter {
                     if (this.defined[_section][_name]) {
                         let local = {}
                         let me = this
-                        for (let service in this.defined[_section][_name].services.GLOBAL)  {
+                        for (let service in this.defined[_section][_name].services.GLOBAL) {
                             local[service] = function () {
                                 var args = Array.prototype.slice.call(arguments);
                                 args.unshift(name);
@@ -434,7 +440,7 @@ function PluginManager() { }
 PluginManager.prototype.addDefined = function (id, path, allowRequire = null, customRegisters) { return m.addDefined.call(this, id, path, allowRequire, customRegisters); }
 PluginManager.prototype.onAppReady = function (callback) { m.appReady(callback) }
 PluginManager.prototype.mountAll = function () { m.checkMounting() }
-PluginManager.prototype.transformCode = function (code) { m.transformCode(code)}
+PluginManager.prototype.transformCode = function (code) { m.transformCode(code) }
 PluginManager.prototype.setDefinedID = function (id) { m.setDefinedID(id) }
 PluginManager.prototype.setPrefix = function (callback) { log.setPrefix(callback) }
 module.exports = PluginManager;
