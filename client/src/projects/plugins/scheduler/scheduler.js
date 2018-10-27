@@ -2,7 +2,7 @@ Observo.onMount((imports) => {
     let require = imports.api.require.use
     let { Layout } = require("@importcore/crust")
     let React = require("React")
-    let { Tab, Tabs, ProgressBar, NumericInput, RadioGroup, Radio, Alignment, Navbar, Button, InputGroup, Alert, Intent, MenuItem, Classes, Dialog, Switch, ContextMenu, Menu } = require("@blueprintjs/core")
+    let { Tab, Tabs, ProgressBar, NumericInput, RadioGroup, Radio, Alignment, Navbar, Overlay, Button, InputGroup, Alert, Intent, MenuItem, Classes, Dialog, Switch, ContextMenu, Menu } = require("@blueprintjs/core")
 
 
     class Professions extends React.Component {
@@ -154,11 +154,31 @@ Observo.onMount((imports) => {
         constructor() {
             super()
             this.state = {
-                unit: "match"
+                unit: "",
+                interval: 0,
+                start: 0,
+                end: 0,
+                isEditing: false
             }
         }
+        componentDidMount() {
+            let socketObject = this.props.socketObject
+            this.socketObject = socketObject
+            socketObject.on("scheduler_editor_updateSettings", ({ settings, isEditingSettings }) => {
+                let { unit, interval, start, end } = settings
+                console.log("SETTING")
+                console.log(isEditingSettings)
+                this.setState({ unit, interval, start, end, isEditing: isEditingSettings })
+            })
+        }
         async onUnitofProgressChange(event) {
-            this.setState({ unit: event.target.value })
+            this.socketObject.emit("scheduler_editor_updateSettings", { type: "unit", value: event.target.value })
+        }
+        async onEditClick() {
+            this.socketObject.emit("scheduler_editor_editingSettings")
+        }
+        async onIntervalInput() {
+
         }
         renderInterval() {
             let title = "Match"
@@ -170,25 +190,41 @@ Observo.onMount((imports) => {
                     <p style={{ fontWeight: "bold", fontSize: 16 }}>{title} Interval</p>
                 </Layout.Grid>
                 <Layout.Grid>
-                    <NumericInput />
+                    <NumericInput onInput={this.onIntervalInput.bind(this)} />
                 </Layout.Grid>
             </Layout.Grid>
         }
         render() {
-            return <Layout.Grid row>
-                <Layout.Grid style={{ padding: 10 }}>
-                    <RadioGroup
-                        label={<p style={{ fontWeight: "bold", fontSize: 16 }}>Unit of Progress</p>}
-                        onChange={this.onUnitofProgressChange.bind(this)}
-                        selectedValue={this.state.unit}
-                        inline={true}
-                    >
-                        <Radio label="Time" value="time" />
-                        <Radio label="Match" value="match" />
-                    </RadioGroup>
-                </Layout.Grid>
-                <Layout.Grid>
-                    {this.renderInterval()}
+            let disabled = false
+            let background = "white"
+            console.log(this.state.isEditing)
+            console.log(imports.api.auth.uuid())
+            if (this.state.isEditing != imports.api.auth.uuid() && this.state.isEditing != false) {
+                disabled = true
+                background = "orange"
+            }
+            if (this.state.isEditing == imports.api.auth.uuid()) {
+                background = "blue"
+            }
+            let isOpen = !this.state.isEditing //For overlay if I want to add one
+            return <Layout.Grid row >
+                <Layout.Grid><Button className="bp3-fill" intent={Intent.WARNING} onClick={this.onEditClick.bind(this)} disabled={disabled}>Edit</Button></Layout.Grid>
+                <Layout.Grid style={{ padding: 10, position: "relative" }} background={background}>
+                    <Layout.Grid>
+                        {/*TODO: Find a way to add overlay without breaking HTML SELECT*/}
+                        <RadioGroup
+                            label={<p style={{ fontWeight: "bold", fontSize: 16 }}>Unit of Progress</p>}
+                            onChange={this.onUnitofProgressChange.bind(this)}
+                            selectedValue={this.state.unit}
+                            inline={true}
+                        >
+                            <Radio label="Time" value="time" />
+                            <Radio label="Match" value="match" />
+                        </RadioGroup>
+                    </Layout.Grid>
+                    <Layout.Grid>
+                        {this.renderInterval()}
+                    </Layout.Grid>
                 </Layout.Grid>
             </Layout.Grid>
         }
@@ -205,6 +241,9 @@ Observo.onMount((imports) => {
                 //SCHEDULER
                 members: {},
                 memberData: {},
+                editorData: {
+                    members: {}
+                },
                 dayTabId: 0
             }
         }
@@ -228,6 +267,9 @@ Observo.onMount((imports) => {
                         console.log(members)
                         this.setState({ members })
                     })
+                    socketObject.on("scheduler_editor_updateEditor", ({ editor }) => {
+                        this.setState({ editorData: editor })
+                    })
                 })
             })
             this.setState({ showTabs: true })
@@ -241,20 +283,13 @@ Observo.onMount((imports) => {
             let sD = this.state.events[event.target.value].startDate
             let eD = this.state.events[event.target.value].endDate
             let days = getDaysArray(new Date(sD), new Date(eD))
-            console.log(days)
-            let memberData = this.state.memberData
-            if (memberData[event.target.value] == null) {
-                memberData[event.target.value] = {}
-            }
-            for (let day in days) {
-                if (memberData[event.target.value][day] == null) {
-                    memberData[event.target.value][day] = {}
-                }
-            }
+            let dayTabId = '0'
+            console.log(dayTabId)
             this.socketObject.emit("scheduler_editor_selectEvent", { day: days[this.state.dayTabId], event: event.target.value })
-            this.setState({ eventChoice: event.target.value, days, memberData, dayTabId: 0 })
+            this.setState({ eventChoice: event.target.value, days: days, dayTabId: dayTabId })
         }
         async handleTabDayChange(dayTabId) {
+            console.log(dayTabId)
             this.socketObject.emit("scheduler_editor_selectEvent", { day: this.state.days[dayTabId], event: this.state.eventChoice })
             this.setState({ dayTabId })
 
@@ -281,14 +316,8 @@ Observo.onMount((imports) => {
         /**
          * Hides/Show a USER on a schedule
          */
-        async onScheduleVisUser(event, day, uuid) {
-            let memberData = this.state.memberData
-            if (!memberData[event][day][uuid].hide) {
-                memberData[event][day][uuid].hide = true
-            } else {
-                memberData[event][day][uuid].hide = false
-            }
-            this.setState({ memberData })
+        async onScheduleVisUser(uuid) {
+            this.socketObject.emit("scheduler_editor_hideMember", { member: { uuid } })
         }
         renderSchedule() {
             if (this.state.eventChoice == "none") {
@@ -301,26 +330,21 @@ Observo.onMount((imports) => {
                 for (let m in this.state.members) {
                     let member = this.state.members[m]
                     let uuid = member.uuid
-                    let event = this.state.eventChoice
-                    let day = this.state.dayTabId
-                    let memberData = this.state.memberData[event][day]
 
-                    if (memberData[uuid] == null) {
-                        memberData[uuid] = { hide: false }
-                    }
-                    if (memberData[uuid] == null) {
-                        memberData[uuid] = { hide: false }
-                    }
                     let background = "white"
                     let visibleText = "Hide"
+
                     let icon = "eye-off"
-                    if (memberData[uuid].hide) {
-                        background = "red"
-                        visibleText = "Show"
-                        icon = "eye-open"
+                    if (this.state.editorData.members[uuid] != null) {
+                        let memberData = this.state.editorData.members[uuid]
+                        if (memberData.hide) {
+                            background = "red"
+                            visibleText = "Show"
+                            icon = "eye-open"
+                        }
                     }
                     let menu = <Menu>
-                        <MenuItem icon={icon} text={visibleText} onClick={this.onScheduleVisUser.bind(this, event, day, uuid)} />
+                        <MenuItem icon={icon} text={visibleText} onClick={this.onScheduleVisUser.bind(this, uuid)} />
                     </Menu>
 
                     items.push(<Layout.Grid background={background} onContextMenu={(event) => { ContextMenu.show(menu, { left: event.clientX, top: event.clientY }, () => { }) }} style={{ padding: 3, borderBottom: "1px solid gray" }} >{member.firstName}, {member.lastName}</Layout.Grid>)
@@ -382,8 +406,8 @@ Observo.onMount((imports) => {
                 <Layout.Grid col>
                     <Layout.Grid row height={this.props.height} width={400} background="lightgray">
                         <Layout.Grid height={30}>
-                            <div className="bp3-select bp3-fill">
-                                <select defaultValue={this.state.eventChoice} onChange={this.onSelectEvent.bind(this)}>
+                            <div className="bp3-select bp3-fill" style={{ zIndex: 10000 }}>
+                                <select defaultValue={this.state.eventChoice} onChange={this.onSelectEvent.bind(this)} style={{ overflow: "none" }}>
                                     <option value="none">Select Event...</option>
                                     {this.renderEvents()}
                                 </select>

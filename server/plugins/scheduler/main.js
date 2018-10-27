@@ -1,5 +1,6 @@
 
 let projects = {}
+let clients = {}
 /**
  * Scheduler Plugin 
  * - Has list of all members, and a list for whom is at an event.
@@ -46,7 +47,8 @@ Observo.onMount((imports) => {
             //START
             if (projects[project] == null) {
                 projects[project] = {}
-                projects[project].clients = {}
+                clients[project] = {}
+                clients[project].socket = {}
                 projects[project].fetchedEvents = null
                 projects[project].fetchedMembers = null
                 projects[project].profession = {}
@@ -60,14 +62,14 @@ Observo.onMount((imports) => {
                 projects[project].selectedEvent = {}
                 projects[project].selectedDay = {}
             }
-            projects[project].clients[uuid] = client
+            clients[project].socket[uuid] = client
             //Connect to the database. Use it as the "on ready for the user"
             let db = imports.api.database.connect(project, page, () => {
                 updateProfessionList(false)
                 updateProfessionEditList(false)
 
                 //updateEditorSettings(false)
-                //updateEditorSheet(false)
+                //updateEditorTable(false)
 
             })
             //Check if events can be used from plugins:events. Only check once per project, then just store it in a variable. Saves database query attempts.
@@ -212,29 +214,33 @@ Observo.onMount((imports) => {
 
 
 
-            let updateEditorSheet = (useGlobal) => {
+            let updateEditorTable = (useGlobal) => {
                 if (useGlobal) {
                     let event = projects[project].selectedEvent[uuid]
                     let day = projects[project].selectedDay[uuid]
-                    let sheet = project[project].editor[event][day]
+                    let editor = projects[project].editor[event][day]
+                    let settings = projects[project].settings[event][day]
+                    let isEditingSettings = projects[project].editSettings[event][day]
                     //Loop through all clients, as we can't use global rn
-                    for (let c in projects[project].clients)
+                    for (let c in clients[project].socket)
                         //Check if this client has select a proper event (none by default, so they SHOULD)
                         if (projects[project].selectedEvent[c] == event && projects[project].selectedDay[c] == day) {
                             //If so grab the client in the variable
-                            let client = projects[project].clients[c]
+                            let _client = clients[project].socket[c]
                             //Send the data to THAT client only (repeat if more client are on the same event and day)
-                            client.emit("scheduler_editor_updateSheet", { sheet })
+                            _client.emit("scheduler_editor_updateEditor", { editor })
+                            _client.emit("scheduler_editor_updateSettings", { settings, isEditingSettings })
                         }
                 } else {
                     let event = projects[project].selectedEvent[uuid]
                     let day = projects[project].selectedDay[uuid]
-                    let sheet = project[project].editor[event][day]
-                    client.emit("scheduler_editor_updateSheet", { sheet })
-                }
-            }
-            let updateSettings = (useGlobal) => {
+                    let editor = projects[project].editor[event][day]
+                    let settings = projects[project].settings[event][day]
+                    let isEditingSettings = projects[project].editSettings[event][day]
 
+                    client.emit("scheduler_editor_updateEditor", { editor })
+                    client.emit("scheduler_editor_updateSettings", { settings, isEditingSettings })
+                }
             }
 
 
@@ -257,7 +263,9 @@ Observo.onMount((imports) => {
                 if (projects[project].editor[event][day] == null) {
                     projects[project].editor[event][day] = {}
                     projects[project].editor[event][day].members = {}
-                    projects[project].editSettings[event][day] = null
+                    console.log(event)
+                    console.log(day)
+                    projects[project].editSettings[event][day] = false
                     projects[project].settings[event][day] = {
                         unit: "match", //time
                         interval: 16, //30
@@ -276,29 +284,54 @@ Observo.onMount((imports) => {
                 }
                 projects[project].selectedEvent[uuid] = event
                 projects[project].selectedDay[uuid] = day
-                updateEdtiorSheet(false)
+                updateEditorTable(false)
+
                 console.log(JSON.stringify(projects))
             })
-            client.on("scheduler_editor_updateSettings", ({ settings }) => {
+            client.on("scheduler_editor_hideMember", ({ member }) => {
+                console.log("YES WE HDING UT")
                 let event = projects[project].selectedEvent[uuid]
                 let day = projects[project].selectedDay[uuid]
-                projects[project].settings[event][day].unit = settings.unit
-                projects[project].settings[event][day].interval = settings.interval
-                projects[project].settings[event][day].start = settings.start
-                projects[project].settings[event][day].end = settings.end
+                if (projects[project].editor[event][day].members[member.uuid].hide == false) {
+                    projects[project].editor[event][day].members[member.uuid].hide = true
+                } else {
+                    projects[project].editor[event][day].members[member.uuid].hide = false
+                }
+                updateEditorTable(true)
+            })
+            client.on("scheduler_editor_updateSettings", ({ type, value }) => {
+                let event = projects[project].selectedEvent[uuid]
+                let day = projects[project].selectedDay[uuid]
+                if (type == "unit" || type == "interval" || type == "start" || type == "end") {
+                    if (type == "start" || type == "end" || type == "interval") {
+                        if (value < 0) {
+                            value = 0
+                        }
+                    }
+                    projects[project].settings[event][day][type] = value
+                }
+                updateEditorTable(true)
             })
 
             client.on("scheduler_editor_editingSettings", () => {
                 let event = projects[project].selectedEvent[uuid]
                 let day = projects[project].selectedDay[uuid]
-                if (projects[project].editSettings[event][day] == null) {
-                    projects[project].editSettings[event][day] = uuid
-                    updateSettings(true)
-                } else {
-                    if (projects[project].editSettings[event][day] == uuid) {
-                        projects[project].editSettings[event][day] = null
-                        updateSettings(true)
+                try {
+                    if (projects[project].editSettings[event][day] == false) {
+                        console.log("HERE!")
+                        projects[project].editSettings[event][day] = uuid
+                        updateEditorTable(true)
+                    } else {
+                        console.log("HERE!!")
+                        if (projects[project].editSettings[event][day] == uuid) {
+                            projects[project].editSettings[event][day] = false
+                            updateEditorTable(true)
+                            console.log("HERE!!!")
+                        }
                     }
+                } catch (e) {
+                    console.log(e)
+                    console.log("Didn't select an event")
                 }
             })
         })
