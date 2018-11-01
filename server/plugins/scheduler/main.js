@@ -242,7 +242,21 @@ Observo.onMount((imports) => {
                     client.emit("scheduler_editor_updateSettings", { settings, isEditingSettings })
                 }
             }
-
+            client.on("scheduler_editor_selectProfession", ({ section, member, profession }) => {
+                let event = projects[project].selectedEvent[uuid]
+                let day = projects[project].selectedDay[uuid]
+                section = parseInt(section)
+                console.log("MEMBER: " + member)
+                console.log("SECTION: " + section)
+                console.log("PROFESSION: " + profession)
+                if (projects[project].editor[event][day].core[section].members[member] == null) {
+                    projects[project].editor[event][day].core[section].members[member] = {}
+                }
+                projects[project].editor[event][day].core[section].members[member] = {profession}
+                console.log(JSON.stringify(projects))
+                updateEditorTable(true)
+                
+            })
 
             /**
              * SelectEvent - What Event A User Selects and the day of that event
@@ -258,10 +272,12 @@ Observo.onMount((imports) => {
                     projects[project].editor[event] = {}
                     projects[project].editSettings[event] = {}
                     projects[project].settings[event] = {}
+                    
                 }
                 //Check if DAY for that EVENT has been used
                 if (projects[project].editor[event][day] == null) {
                     projects[project].editor[event][day] = {}
+                    projects[project].editor[event][day].core = {}
                     projects[project].editor[event][day].members = {}
                     console.log(event)
                     console.log(day)
@@ -302,17 +318,35 @@ Observo.onMount((imports) => {
             client.on("scheduler_editor_updateSettings", ({ type, value }) => {
                 let event = projects[project].selectedEvent[uuid]
                 let day = projects[project].selectedDay[uuid]
-                if (type == "unit" || type == "interval" || type == "start" || type == "end") {
-                    if (type == "start" || type == "end" || type == "interval") {
-                        if (value < 0) {
-                            value = 0
-                        }
+                if (projects[project].editSettings[event][day] == uuid) {
+                    if (type == "unit" || type == "interval" || type == "start" || type == "end") {
+                        projects[project].settings[event][day][type] = value
                     }
-                    projects[project].settings[event][day][type] = value
-                }
-                updateEditorTable(true)
-            })
+                    //ONLY MATCH IS SUPPORTED TODO: ADD TIME
+                  
+                    let interval = projects[project].settings[event][day].interval
+                    if (interval < 1) {
+                        interval = 1
+                    }
+                    let start = projects[project].settings[event][day].start
+                    if (start < 1) {
+                        start = 1
+                    }
+                    let end = projects[project].settings[event][day].end
+                    if (end < 1) {
+                        end = 1
+                    }
+                    let columns = Math.ceil((end - start + 1) / interval)
 
+                    updateEditorTable(true)
+                    projects[project].editor[event][day].core = {}
+                    for (let c = 0; c < columns; c++) {
+                        projects[project].editor[event][day].core[c] = {}
+                        projects[project].editor[event][day].core[c].members = {}
+                    }
+                    updateEditorTable(true)
+                }
+            })
             client.on("scheduler_editor_editingSettings", () => {
                 let event = projects[project].selectedEvent[uuid]
                 let day = projects[project].selectedDay[uuid]
