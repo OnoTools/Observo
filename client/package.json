@@ -1,6 +1,7 @@
 {
-  "name": "observo",
-  "version": "1.0.0",
+  "name": "client",
+  "productName": "client",
+  "version": "2.0.0",
   "description": "My Electron application description",
   "main": "main.js",
   "scripts": {
@@ -31,7 +32,7 @@
         "packageManager": "npm"
       },
       "electronWinstallerConfig": {
-        "name": "client_"
+        "name": "client"
       },
       "electronInstallerDebian": {},
       "electronInstallerRedhat": {},
@@ -41,7 +42,7 @@
       },
       "windowsStoreConfig": {
         "packageName": "",
-        "name": "client_"
+        "name": "client"
       }
     }
   },
@@ -67,13 +68,13 @@
     "brace": "^0.11.1",
     "classnames": "^2.2.6",
     "electron-compile": "^6.4.3",
-    "electron-react-devtools": "^0.5.3",
     "electron-squirrel-startup": "^1.0.0",
     "hotkeys-js": "^3.3.5",
     "import-window": "^1.0.1",
     "is-electron-renderer": "^2.0.1",
     "moment": "^2.22.2",
     "node-notifier": "^5.2.1",
+    "raven": "^2.6.4",
     "react": "^16.4.1",
     "react-ace": "^6.2.0",
     "react-autosuggest": "^9.4.2",
@@ -91,13 +92,12 @@
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
-    "electron-forge": "^5.2.2",
-    "electron-prebuilt-compile": "2.0.6",
+    "electron-forge": "^5.2.3",
+    "electron-prebuilt-compile": "3.0.10",
     "eslint": "^3.19.0",
     "eslint-config-airbnb": "^15.1.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jsx-a11y": "^5.1.1",
-    "eslint-plugin-react": "^7.11.1",
-    "raven": "^2.6.3"
+    "eslint-plugin-react": "^7.11.1"
   }
 }

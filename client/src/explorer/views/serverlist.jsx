@@ -76,9 +76,9 @@ export default class ServerList extends Component {
         >
             <div className="pt-dialog-body">
                 <Layout.Grid canvas style={{ paddingTop: "10px" }}>
-                    <Layout.Grid row>
-                        <Layout.Grid row>
-                            <Layout.Grid col width="75px">
+                    <Layout.Grid col>
+                        <Layout.Grid col>
+                            <Layout.Grid row width="75px">
                                 <Layout.Grid>
                                     <p>Name</p>
                                 </Layout.Grid>
@@ -86,7 +86,7 @@ export default class ServerList extends Component {
                                     <p>Address</p>
                                 </Layout.Grid>
                             </Layout.Grid>
-                            <Layout.Grid col>
+                            <Layout.Grid row>
                                 <Layout.Grid>
                                     <InputGroup leftIcon="wrench" />
                                 </Layout.Grid>
@@ -114,13 +114,13 @@ export default class ServerList extends Component {
         </Dialog>
     }
     render() {
-        return <Layout.Grid row id="container" style={{ justifyContent: 'flex-start', height: '100%' }}>
-            <Layout.Grid col width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} background="#99ceec">
+        return <Layout.Grid col id="container" style={{ justifyContent: 'flex-start', height: '100%' }}>
+            <Layout.Grid row width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} background="#99ceec">
                 {this.renderServers()}
             </Layout.Grid>
-            <Layout.Grid col>
+            <Layout.Grid row>
                 <Layout.Grid style={{ alignSelf: 'stretch', flexGrow: 2 }}>
-                    <Layout.Grid col>
+                    <Layout.Grid row>
                         <Layout.Grid style={{ flex: '0 0 auto', height: 350 }}>
                             <section style={{ position: 'relative', margin: 'auto', top: '30%', right: 0, bottom: 0, left: 0, borderRadius: 3, textAlign: 'center' }}>
                                 <p style={{ fontSize: 72 }} className="rb-font observo-title">
@@ -129,7 +129,7 @@ export default class ServerList extends Component {
                             </section>
                         </Layout.Grid>
                         <Layout.Grid height="230px">
-                            <Layout.Grid row center id="yep">
+                            <Layout.Grid col center id="yep">
                                 <Button style={{ width: 200, height: 100 }} id="addServer" onClick={this.addServer.bind(this)}>
                                     <Layout.Box>
                                         <Icon icon="folder-open" style={{ width: 30, height: 30 }} />
@@ -140,7 +140,7 @@ export default class ServerList extends Component {
                         </Layout.Grid>
                     </Layout.Grid>
                 </Layout.Grid>
-                <Layout.Grid row style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
+                <Layout.Grid col style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
                     <Layout.Grid />
                     <Layout.Grid style={{ flex: '0 0 auto', width: 60 }}>
                         <Tooltip content="Go back" position={Position.LEFT}>

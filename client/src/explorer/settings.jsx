@@ -1,9 +1,8 @@
 import React, { Component } from 'react'
-import { Button, Intent, Spinner, Switch, Tooltip, Icon, ProgressBar, Dialog, MenuDivider, Popover, Alignment, Menu, MenuItem, Classes, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
-import { Layout } from "crust"
-import { AppToaster } from "./toaster";
-import {GlobalContext} from "global-context"
-require("babel-polyfill")
+import { Button, Intent, Switch, Icon, Popover, Menu, MenuItem, Classes, Overlay, Position, InputGroup } from "@blueprintjs/core";
+import { Layout } from "@importcore/crust"
+
+
 
 
 export default class Settings extends Component {
@@ -18,12 +17,39 @@ export default class Settings extends Component {
      * - Render the selected view on mount
      */
     componentDidMount() {
-        for (let item in this.props.settings) {
-            let i = this.props.settings[item]
-            if (i.selected) {
-                this.setState({ selectedView: item, localSettings: this.props.settings, localSettingsO: this.props.settings })
-                break
+        let localSettings = this.props.settings
+        let save = this.props.saved
+        if (save == null) {
+            save = {}
+        }
+        for (let category in localSettings) {
+            let i = this.props.settings[category]
+            if (save[category] == null) {
+                save[category] = {}
             }
+            //console.log(save[category])
+            for (let section in localSettings[category].sections) {
+                if (save[category][section] == null) {
+                    save[category][section] = {}
+                }
+                //console.log(save[category][section])
+                for (let object in localSettings[category].sections[section].list) {
+                    if (save[category][section][object] == null) {
+                        save[category][section][object] = {}
+                    }
+                    //console.log(localSettings[category].sections[section].list[object])
+                    localSettings[category].sections[section].list[object].options = save[category][section][object]
+                }
+            }
+            if (i.selected) {
+                this.setState({ defaultView: category, selectedView: category, localSettings: localSettings, localSaved: this.props.saved, localSettingsO: this.props.settings })
+            }
+        }
+    }
+    componentDidUpdate(prevProps) {
+        if (prevProps.isOpen != this.props.isOpen) {
+            //console.log(this.state.defaultView)
+            this.setState({ selectedView: this.state.defaultView })
         }
     }
     switchView(name) {
@@ -39,12 +65,12 @@ export default class Settings extends Component {
             let styleText = { paddingLeft: 10, marginTop: 5, fontSize: 30 }
             let styleIcon = { width: 30, height: 30 }
             if (item == this.state.selectedView) {
-                styleText.color = "#00acd7"
-                styleIcon.color = "#00acd7"
+                styleText.color = "red"
+                styleIcon.color = "red"
             }
-            items.push(<Layout.Grid key={item} row height="50px" style={{ cursor: "pointer" }} className="obsero--settings-section" onClick={this.switchView.bind(this, item)}>
+            items.push(<Layout.Grid key={item} col height="50px" style={{ cursor: "pointer" }} className="settings-section" onClick={this.switchView.bind(this, item)}>
                 <Layout.Grid>
-                    <Layout.Grid row center style={{ paddingTop: 15, paddingBottom: 15 }}>
+                    <Layout.Grid col center style={{ paddingTop: 15, paddingBottom: 15 }}>
                         <Layout.Box>
                             <Icon icon={i.icon} style={styleIcon} />
                             <p style={styleText} >{i.display}</p>
@@ -62,25 +88,30 @@ export default class Settings extends Component {
      */
     updateDropdown(data, name) {
         let copy = this.state.localSettings
-        for (let object in copy[data.category].sections) {
-            if (object == data.section) {
-                for (let s in copy[data.category].sections[object].list) {
-                    if (s == data.object) {
-                        for (let t in copy[data.category].sections[object].list[s].options) {
-                            if (copy[data.category].sections[object].list[s].options !== "undefined") {
-                                if (copy[data.category].sections[object].list[s].options[t].text == name) {
-                                    copy[data.category].sections[object].list[s].options[t].selected = true
+        let save = this.state.localSaved
+        for (let section in copy[data.category].sections) {
+            if (section == data.section) {
+                for (let object in copy[data.category].sections[section].list) {
+                    if (object == data.object) {
+                        for (let item in copy[data.category].sections[section].list[object].options) {
+                            if (copy[data.category].sections[section].list[object].options !== "undefined") {
+                                if (copy[data.category].sections[section].list[object].options[item].text == name) {
+                                    copy[data.category].sections[section].list[object].options[item].selected = true
+                                    save[data.category][section][section][item].selected = true
                                 } else {
-                                    copy[data.category].sections[object].list[s].options[t].selected = false
+                                    copy[data.category].sections[section].list[object].options[item].selected = false
+                                    save[data.category][section][section][item].selected = false
                                 }
                             }
-
                         }
                     }
                 }
             }
         }
-        this.setState({ localSettings: copy })
+        this.setState({ localSettings: copy, localSaved: save })
+        if (this.props.onChange) {
+            this.props.onChange(save)
+        }
     }
     /**
      * updateSwitch - When switch is activated, update the state of the switch, globally
@@ -89,16 +120,39 @@ export default class Settings extends Component {
      */
     updateSwitch(data, boolean) {
         let copy = this.state.localSettings
+        let save = this.state.localSaved
         for (let section in copy[data.category].sections) {
             if (section == data.section) {
                 for (let object in copy[data.category].sections[section].list) {
-                    if (object == data.object) { 
+                    if (object == data.object) {
                         copy[data.category].sections[section].list[object].options.selected = !boolean
+                        save[data.category][section][object].selected = !boolean
                     }
                 }
             }
         }
-        this.setState({ localSettings: copy })
+        this.setState({ localSettings: copy, localSaved: save })
+        if (this.props.onChange) {
+            this.props.onChange(save)
+        }
+    }
+    updateInput(data, event) {
+        let copy = this.state.localSettings
+        let save = this.state.localSaved
+        for (let section in copy[data.category].sections) {
+            if (section == data.section) {
+                for (let object in copy[data.category].sections[section].list) {
+                    if (object == data.object) {
+                        copy[data.category].sections[section].list[object].options.text = event.currentTarget.value
+                        save[data.category][section][object].text = event.currentTarget.value
+                    }
+                }
+            }
+        }
+        this.setState({ localSettings: copy, localSaved: save })
+        if (this.props.onChange) {
+            this.props.onChange(save)
+        }
     }
     /**
      * RenderViewArea - Renders the views; Only renders the 'selected' view
@@ -151,9 +205,9 @@ export default class Settings extends Component {
                         _text = a.text
                     }
                     if (a.selected != null) {
-                       if (a.selected) {
+                        if (a.selected) {
                             _disabled = true
-                       }
+                        }
                     }
                     opts.push(<MenuItem disabled={_disabled} key={"observoSettingDropdown" + o} onClick={this.updateDropdown.bind(this, data, _text)} icon={_icon} text={_text} />)
                 }
@@ -175,7 +229,7 @@ export default class Settings extends Component {
                     }
                 }
             }
-
+            s
             //Render it
             return <Layout.Grid key={key} height="30px" style={{ marginTop: 5 }}>
                 <Layout.Box>
@@ -186,6 +240,38 @@ export default class Settings extends Component {
                 </Layout.Box>
             </Layout.Grid>
         }
+        let renderInput = (key, options, text, data) => {
+            return <Layout.Grid key={"observoSettingInput" + key} height="40px" style={{ marginTop: 5 }}>
+                <Layout.Box>
+                    <p style={{ paddingLeft: 10, marginTop: 5, fontSize: 20 }} >{text}: </p> <InputGroup value={options.text} style={{ marginLeft: 15, marginTop: 5, fontSize: 20 }} onChange={this.updateInput.bind(this, data)} />
+                </Layout.Box>
+            </Layout.Grid>
+        }
+        let renderText = (key, options, text, data) => {
+            return <Layout.Grid key={"observoSettingText" + key} style={{ marginTop: 5 }}>
+                <Layout.Box>
+                    <p style={{ paddingLeft: 10, marginTop: 5, fontSize: 20 }} >{
+                        text.split("\n").map(function (item, idx) {
+                            return (
+                                <span key={idx}>
+                                    {item}
+                                    <br />
+                                </span>
+                            )
+                        })
+                    }</p>
+                </Layout.Box>
+            </Layout.Grid>
+        }
+        let renderButton = (event, key, value, text, data) => {
+            return <Layout.Grid key={"observoSettingText" + key} style={{ marginTop: 5 }}>
+                <Layout.Box>
+                    <p style={{ paddingLeft: 10, marginTop: 5, fontSize: 20 }} >{text}:     </p>
+                    <Button style={{marginLeft: 20}} intent={Intent.SUCCESS} onClick={event.bind(this)}>{value}</Button>
+                </Layout.Box>
+            </Layout.Grid>
+        }
+
         //Local variables state
         let items = []
         for (let item in this.state.localSettings) { //CATEGORY
@@ -204,6 +290,18 @@ export default class Settings extends Component {
                             if (object.type == "TOGGLE") { //IDENTIFY TYPE
                                 items.push(renderSwitch(o, object.options, object.display, data))
                             }
+                            if (object.type == "INPUT") { //IDENTIFY TYPE
+                                items.push(renderInput(o, object.options, object.display, data))
+                            }
+                            if (object.type == "TEXT") { //IDENTIFY TYPE
+                                items.push(renderText(o, object.options, object.display, data))
+                            }
+                            if (object.type == "BUTTON") { //IDENTIFY TYPE
+                                //console.log(this.state.localSettings[item].sections[sec].list[o])
+                                let event = this.state.localSettings[item].sections[sec].list[o].event
+                                let text = this.state.localSettings[item].sections[sec].list[o].text
+                                items.push(renderButton(event, o, text, object.display, data))
+                            }
                         }
                     }
                 }
@@ -213,19 +311,11 @@ export default class Settings extends Component {
         return items
     }
     /**
-     * SaveHandler - When save button is clicked
-     */
-    saveHandler() {
-        if (this.props.onSave) {
-            this.props.onSave()
-        }
-    }
-    /**
      * CancelHandeler - When cancel button is clicked
      */
-    cancelHandler() {
-        if (this.props.onCancel) {
-            this.props.onCancel()
+    closeHandler() {
+        if (this.props.onSave) {
+            this.props.onSave()
         }
     }
     /**
@@ -233,6 +323,7 @@ export default class Settings extends Component {
      */
     render() {
         return <Overlay
+            canEscapeKeyClose={true}
             icon="cog"
             isOpen={this.props.isOpen}
             onClose={this.props.onClose}
@@ -241,8 +332,8 @@ export default class Settings extends Component {
             transitionDuration={0}
         >
             <Layout.Grid height="100%" width="100%" background="lightgray" className={Classes.ELEVATION_4} >
-                <Layout.Grid col>
-                    <Layout.Grid col height="40px" style={{ borderBottom: "1px solid #C9D0D5" }}>
+                <Layout.Grid row>
+                    <Layout.Grid row height="40px" style={{ borderBottom: "1px solid #C9D0D5" }}>
                         <div className="pt-dialog-header" style={{ margin: 0 }}><Icon icon="cog" />
                             <h4 className="pt-dialog-header-title">Settings</h4>
                             <div className="pt-dialog-footer-actions" style={{ paddingRight: 10 }}>
@@ -250,23 +341,18 @@ export default class Settings extends Component {
                                     intent={Intent.SUCCESS}
                                     text="Save"
                                     style={{ paddingRight: 10 }}
-                                    onClick={this.saveHandler.bind(this)}
-                                />
-                                <Button
-                                    intent={Intent.DANGER}
-                                    text="Cancel"
-                                    onClick={this.cancelHandler.bind(this)}
+                                    onClick={this.closeHandler.bind(this)}
                                 />
                             </div>
                         </div>
                     </Layout.Grid>
 
-                    <Layout.Grid row>
-                        <Layout.Grid col width="200px">
+                    <Layout.Grid col>
+                        <Layout.Grid row width="200px">
                             {this.renderCategoryList()}
                         </Layout.Grid>
-                        <Layout.Grid width="10px" height="100%" background="white" style={{ borderLeft: "3px solid white" }}> </Layout.Grid>
-                        <Layout.Grid col height="100%" width="100%" style={{ overflowY: "auto", overflow: "overlay" }}>
+                        <Layout.Grid row width="10px" height="3000px" background="white" style={{ borderLeft: "3px solid white" }}> </Layout.Grid>
+                        <Layout.Grid row height="100%" width="100%" style={{ overflowY: "auto", overflow: "overlay" }}>
                             {this.renderViewArea()}
                         </Layout.Grid>
                     </Layout.Grid>

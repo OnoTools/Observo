@@ -153,11 +153,11 @@ class ProjectViewer extends Component {
             }
             return items
         }
-        return <Layout.Grid row id="container" style={{ justifyContent: 'flex-start', height: '100%' }}>
-            <Layout.Grid col>
+        return <Layout.Grid col id="container" style={{ justifyContent: 'flex-start', height: '100%' }}>
+            <Layout.Grid row>
                 <Layout.Grid style={{ alignSelf: 'stretch', flexGrow: 2 }}>
-                    <Layout.Grid col>
-                        <Layout.Grid row style={{ flex: '0 0 auto', height: 120 }}>
+                    <Layout.Grid row>
+                        <Layout.Grid col style={{ flex: '0 0 auto', height: 120 }}>
                             <Layout.Grid>
                                 <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: 100 }}>
                                     <h2>{this.props.serverProperties.name}</h2>
@@ -166,18 +166,18 @@ class ProjectViewer extends Component {
                             </Layout.Grid>
                             <Layout.Grid>
                                 <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: 100 }}>
-                                    <Layout.Grid row>
+                                    <Layout.Grid col>
                                         <Layout.Grid>
                                             <h2>{this.state.user.name}</h2>
                                         </Layout.Grid>
-                                        <Layout.Grid col style={{ overflowY: "auto", overflow: "overlay" }}>
+                                        <Layout.Grid row style={{ overflowY: "auto", overflow: "overlay" }}>
                                             {renderRoles(this.state.user.roles)}
                                         </Layout.Grid>
                                     </Layout.Grid>
                                 </Card>
                             </Layout.Grid>
                         </Layout.Grid>
-                        <Layout.Grid row style={{ flex: '0 0 auto', height: 444 }}>
+                        <Layout.Grid col style={{ flex: '0 0 auto', height: 444 }}>
                             <Layout.Grid>
                                 <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: '100%' }}>
 
@@ -185,16 +185,16 @@ class ProjectViewer extends Component {
                             </Layout.Grid>
                             <Layout.Grid>
                                 <Card interactive={false} elevation={Elevation.TWO} style={{ margin: 10, height: '100%' }}>
-                                    <Layout.Grid col width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} className="observo--sidebar">
+                                    <Layout.Grid row width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} className="observo--sidebar">
                                         {this.renderServerPlugins()}
                                     </Layout.Grid>
                                 </Card>
                             </Layout.Grid>
                         </Layout.Grid>
-                        <Layout.Grid row height="20px" />
+                        <Layout.Grid col height="20px" />
                     </Layout.Grid>
                 </Layout.Grid>
-                <Layout.Grid row style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
+                <Layout.Grid col style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
                     <Layout.Grid style={{ flex: '0 0 auto', width: 60 }}>
                         <Tooltip content="Go back" position={Position.LEFT}>
                             <Button id="back" onClick={this.goBack.bind(this)}>
@@ -206,7 +206,7 @@ class ProjectViewer extends Component {
                     </Layout.Grid>
                 </Layout.Grid>
             </Layout.Grid>
-            <Layout.Grid col width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} className="observo--sidebar">
+            <Layout.Grid row width="300px" height="100%" style={{ overflowY: "auto", overflow: "overlay" }} className="observo--sidebar">
                 {this.renderServers()}
             </Layout.Grid>
             {this.renderDisconnect()}

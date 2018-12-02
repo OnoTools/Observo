@@ -1,17 +1,28 @@
-const electron = require('electron')
-const { app } = require('electron')
+const { app, BrowserWindow } = require('electron');
 
-const importWindow = require('import-window')
-// Module to control application life.
-// Module to create native browser window.
-const BrowserWindow = electron.BrowserWindow
-const path = require('path')
-const url = require('url')
-
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
+  app.quit();
+}
+let enableDevTools = false
+for (let v in process.argv) {
+  let arg = process.argv[v]
+  if (arg == "--devTools") {
+    enableDevTools = true
+  }
+}
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
-app.disableHardwareAcceleration()
+let mainWindow;
+app.disableHardwareAcceleration();
+const electron = require('electron')
+const importWindow = require('import-window')
+
+// Let electron reloads by itself when webpack watches changes in ./app/
+
+
+const path = require('path')
+const url = require('url')
 function createWindow() {
   // Create the browser window.
   mainWindow = importWindow.createWindow({
@@ -25,7 +36,9 @@ function createWindow() {
       zoomFactor: 0.9,
     }
   })
-
+  if (enableDevTools) {
+    mainWindow.openDevTools()
+  }
   // and load the index.html of the app.
   mainWindow.setURL(__dirname, "./src/explorer/index.html")
   //mainWindow.win.setFullScreenable(false)

@@ -1,12 +1,9 @@
 import React, { Component } from 'react'
 const notifier = require('node-notifier');
-import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Dialog, Alignment, ButtonGroup, Menu, MenuItem, Classes, Portal, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
-import { Cell, col, Table } from "@blueprintjs/table";
+import { Button, Intent, Dialog, InputGroup } from "@blueprintjs/core";
 import { Window, TitleBar, Text } from 'react-desktop/windows';
 import { Layout } from "crust"
-import {GlobalContext} from "global-context"
-import Draggable from 'react-draggable';
-import classNames from 'classnames'
+import { GlobalContext } from "global-context"
 import { AppToaster } from "./toaster";
 import hotkeys from 'hotkeys-js';
 import io from 'socket.io-client';
@@ -14,7 +11,7 @@ import events from 'events'
 require("babel-polyfill")
 
 //TODO: REMOVE AS ITS DEBUG
-stash.set('serverList', { "butter": { name: "Butter", ip: "76915f67.ngrok.io" },"local": { name: "local", ip: "localhost:3000" } });
+stash.set('serverList', { "butter": { name: "Butter", ip: "76915f67.ngrok.io" }, "local": { name: "local", ip: "localhost:3000" } });
 
 
 
@@ -62,7 +59,7 @@ export default class App extends Component {
             },
             globalProvider: {
 
-                globalEvent: objectEvent 
+                globalEvent: objectEvent
             }
         }
     }
@@ -96,7 +93,7 @@ export default class App extends Component {
             }
         });
 
-        this.state.globalProvider.globalEvent.on("SOCKET:close", this.socketClose.bind(this) )
+        this.state.globalProvider.globalEvent.on("SOCKET:close", this.socketClose.bind(this))
     }
     /**
      * updatePosition - Updats the Position of the views
@@ -201,15 +198,15 @@ export default class App extends Component {
 
         })
         socketObject.on('connect', function () {
-            self.state.globalProvider.globalEvent.emit("SOCKET:connected", {global: io, client: socketObject})
+            self.state.globalProvider.globalEvent.emit("SOCKET:connected", { global: io, client: socketObject })
             socketObject.on('disconnect', function () {
                 console.log("")
                 self.socketClose()
-                AppToaster.show({ icon: "offline", message: "Disconnected", intent: Intent.DANGER});
+                AppToaster.show({ icon: "offline", message: "Disconnected", intent: Intent.DANGER });
                 self.socketObject = null
             })
             socketObject.on("auth_vaildSignin", (data) => {
-                self.setState({ showSignInDialog: false, user: data.uuid,})
+                self.setState({ showSignInDialog: false, user: data.uuid, })
                 self.moveTo(0, -1, 0)
                 socketObject.emit("core_projectList")
                 socketObject.emit("core_pluginList")
@@ -218,11 +215,11 @@ export default class App extends Component {
             socketObject.on("auth_signInNewDevice", (data) => {
                 self.setState({ showSignInDialog: false })
                 self.moveTo(-1, 0, 0)
-                AppToaster.show({ icon: "info-sign", message: "Disconnected: Sign in from another device", intent: Intent.WARNING});
+                AppToaster.show({ icon: "info-sign", message: "Disconnected: Sign in from another device", intent: Intent.WARNING });
                 socketObject.close()
             })
         })
-        this.setState({ serverProperties: { ip: ip, name: name },  userName: null, userPassword: null, showSignInDialog: true})
+        this.setState({ serverProperties: { ip: ip, name: name }, userName: null, userPassword: null, showSignInDialog: true })
         this.socketObject = socketObject
     }
     authSignIn() {
@@ -257,9 +254,9 @@ export default class App extends Component {
         >
             <div className="pt-dialog-body">
                 <Layout.Grid canvas style={{ padding: 10 }}>
-                    <Layout.Grid row>
-                        <Layout.Grid row>
-                            <Layout.Grid col width="75px">
+                    <Layout.Grid col>
+                        <Layout.Grid col>
+                            <Layout.Grid row width="75px">
                                 <Layout.Grid>
                                     <p>Username</p>
                                 </Layout.Grid>
@@ -267,7 +264,7 @@ export default class App extends Component {
                                     <p>Password</p>
                                 </Layout.Grid>
                             </Layout.Grid>
-                            <Layout.Grid col>
+                            <Layout.Grid row>
                                 <Layout.Grid>
                                     <InputGroup onInput={(event) => { this.setState({ userName: event.target.value }) }} leftIcon="user" />
                                 </Layout.Grid>
@@ -293,12 +290,12 @@ export default class App extends Component {
     render() {
         return (
             <Window color="rgba(0, 153, 191, 0)" background="rgba(0, 153, 191, 1)">
-                <TitleBar background="#00acd7" style={{height: 30}}title={<span className="observo-text">OBSERVO</span>} controls />
+                <TitleBar background="#00acd7" style={{ height: 30 }} title={<span className="observo-text">OBSERVO</span>} controls />
                 <Debug isOpen={this.state.isDebugOpen} />
                 <GlobalContext.Provider value={this.state.globalProvider}>
                     <Layout.Grid canvas>
-                        <Layout.Grid row style={{ "justifyContent": "flex-start" }} ref="grid">
-                            <Layout.Grid col>
+                        <Layout.Grid col style={{ "justifyContent": "flex-start" }} ref="grid">
+                            <Layout.Grid row>
                                 <Layout.Grid width="888px" height="637px">
                                     <ServerList moveTo={this.moveTo.bind(this)} moveRight={this.moveRight.bind(this)} onDisconnect={() => { this.socketObject.close() }} onConnect={(ip, name) => { this.moveTo(-1, -1, 0); this.connectToServer(ip, name) }} />
                                 </Layout.Grid>
