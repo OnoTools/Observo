@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Dialog, Alignment, ButtonGroup, Menu, MenuItem, Classes, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
 import { Layout } from "crust"
-import {GlobalContext} from "global-context"
+import { GlobalContext } from "global-context"
 import classNames from 'classnames'
 import hotkeys from 'hotkeys-js';
 import io from 'socket.io-client';
@@ -41,6 +41,10 @@ let version = "2.0.0 BETA"
 export default class Home extends Component {
     constructor() {
         super()
+        this.state = {
+            isSettingsOpen: false,
+            saved: globalSaved
+        }
         this.settings = {
             general: {
                 display: "General",
@@ -121,6 +125,9 @@ export default class Home extends Component {
             }
         }
     }
+    settingChange() {
+        //changed?
+    }
     /**
      * OpenHelp - Opens Help Drawer
      */
@@ -141,11 +148,11 @@ export default class Home extends Component {
     render() {
         return <Layout.Grid col style={{ justifyContent: 'flex-start', height: '100%' }}>
             <Settings
-                    isOpen={this.state.isSettingsOpen}
-                    onSave={this.openSettings.bind(this)}
-                    settings={this.settings}
-                    saved={this.state.saved}
-                    onChange={this.settingChange.bind(this)} />
+                isOpen={this.state.isSettingsOpen}
+                onSave={this.openSettings.bind(this)}
+                settings={this.settings}
+                saved={this.state.saved}
+                onChange={this.settingChange.bind(this)} />
             <Overlay isOpen={this.state.isHelpOpen} style={{ top: 10 }} onClose={this.openHelp.bind(this)}>
 
                 <Layout.Grid height="200px" width="100%" background="white" className={Classes.ELEVATION_4} >
@@ -189,7 +196,7 @@ export default class Home extends Component {
                         </Layout.Grid>
                     </Layout.Grid>
                 </Layout.Grid>
-                <Layout.Grid col height="65px" style={{ marginLeft: 10 }}>
+                <Layout.Grid col height={58} style={{ marginLeft: 10 }}>
                     <Layout.Grid>
                         <Button id="settings" style={{ height: 50, width: 50 }} onClick={this.openSettings.bind(this)}>
                             <Layout.Box>

@@ -65,14 +65,14 @@ export default class Settings extends Component {
             let styleText = { paddingLeft: 10, marginTop: 5, fontSize: 30 }
             let styleIcon = { width: 30, height: 30 }
             if (item == this.state.selectedView) {
-                styleText.color = "red"
-                styleIcon.color = "red"
+                styleText.color = "blue"
+                styleIcon.color = "blue"
             }
             items.push(<Layout.Grid key={item} col height="50px" style={{ cursor: "pointer" }} className="settings-section" onClick={this.switchView.bind(this, item)}>
                 <Layout.Grid>
                     <Layout.Grid col center style={{ paddingTop: 15, paddingBottom: 15 }}>
                         <Layout.Box>
-                            <Icon icon={i.icon} style={styleIcon} />
+                            <Icon icon={i.icon} style={styleIcon} iconSize={30} />
                             <p style={styleText} >{i.display}</p>
                         </Layout.Box>
                     </Layout.Grid>
@@ -267,7 +267,7 @@ export default class Settings extends Component {
             return <Layout.Grid key={"observoSettingText" + key} style={{ marginTop: 5 }}>
                 <Layout.Box>
                     <p style={{ paddingLeft: 10, marginTop: 5, fontSize: 20 }} >{text}:     </p>
-                    <Button style={{marginLeft: 20}} intent={Intent.SUCCESS} onClick={event.bind(this)}>{value}</Button>
+                    <Button style={{ marginLeft: 20 }} intent={Intent.SUCCESS} onClick={event.bind(this)}>{value}</Button>
                 </Layout.Box>
             </Layout.Grid>
         }
@@ -334,15 +334,17 @@ export default class Settings extends Component {
             <Layout.Grid height="100%" width="100%" background="lightgray" className={Classes.ELEVATION_4} >
                 <Layout.Grid row>
                     <Layout.Grid row height="40px" style={{ borderBottom: "1px solid #C9D0D5" }}>
-                        <div className="pt-dialog-header" style={{ margin: 0 }}><Icon icon="cog" />
-                            <h4 className="pt-dialog-header-title">Settings</h4>
-                            <div className="pt-dialog-footer-actions" style={{ paddingRight: 10 }}>
-                                <Button
-                                    intent={Intent.SUCCESS}
-                                    text="Save"
-                                    style={{ paddingRight: 10 }}
-                                    onClick={this.closeHandler.bind(this)}
-                                />
+                        <div className="bp3-dialog-header" style={{ margin: 0, height: 30, width: "100%" }} ><Icon icon="cog" />
+                            <h4 className="bp3-dialog-header-title">Settings</h4>
+                            <div className="bp3-dialog-footer">
+                                <div className="bp3-dialog-footer-actions" style={{paddingRight: 10 }}>
+                                    <Button
+                                        intent={Intent.SUCCESS}
+                                        text="Save"
+                                        style={{ paddingRight: 10 }}
+                                        onClick={this.closeHandler.bind(this)}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </Layout.Grid>

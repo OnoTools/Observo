@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Dialog, Alignment, ButtonGroup, ContextMenu, Menu, MenuItem, Classes, Collapse, Overlay, Position, InputGroup } from "@blueprintjs/core";
 import { Layout } from "crust"
-import {GlobalContext} from "global-context"
+import { GlobalContext } from "global-context"
 require("babel-polyfill")
 
 export default class ServerList extends Component {
@@ -140,13 +140,13 @@ export default class ServerList extends Component {
                         </Layout.Grid>
                     </Layout.Grid>
                 </Layout.Grid>
-                <Layout.Grid col style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
+                <Layout.Grid col style={{ flex: '0 0 auto', height: 200, marginLeft: 10 }}>
                     <Layout.Grid />
                     <Layout.Grid style={{ flex: '0 0 auto', width: 60 }}>
                         <Tooltip content="Go back" position={Position.LEFT}>
-                            <Button id="back" onClick={() => { this.props.moveRight() }}>
+                            <Button id="back" onClick={() => { this.props.moveRight() }} style={{ width: 50, height: 50 }}>
                                 <Layout.Box>
-                                    <Icon icon="chevron-right" style={{ width: 30, height: 30 }} />
+                                    <Icon icon="chevron-right" />
                                 </Layout.Box>
                             </Button>
                         </Tooltip>

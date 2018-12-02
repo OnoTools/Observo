@@ -48,19 +48,22 @@ export default class App extends Component {
         this.state = {
             isSpinner: true,
             isDebugOpen: false,
+
             showSignInDialog: false,
             userName: null,
+
             userPassword: null,
             userSessionKey: null,
             userAuthKey: null,
+
             serverProperties: {
                 ip: null,
                 name: null
             },
             globalProvider: {
-
                 globalEvent: objectEvent
-            }
+            },
+            disableAnimations: true
         }
     }
     /**
@@ -110,6 +113,9 @@ export default class App extends Component {
             transform: `translate(${x}px, ${y}px)` //Pos Towards
         }
         ]
+        if (this.state.disableAnimations) {
+            time = 0
+        }
         //Animation Timinings
         let timing = {
             duration: time,
@@ -269,15 +275,15 @@ export default class App extends Component {
                                     <InputGroup onInput={(event) => { this.setState({ userName: event.target.value }) }} leftIcon="user" />
                                 </Layout.Grid>
                                 <Layout.Grid style={{ paddingTop: 5 }}>
-                                    <InputGroup onInput={(event) => { this.setState({ userPassword: event.target.value }) }} leftIcon="password" />
+                                    <InputGroup type="password" onInput={(event) => { this.setState({ userPassword: event.target.value }) }}  />
                                 </Layout.Grid>
                             </Layout.Grid>
                         </Layout.Grid>
                     </Layout.Grid>
                 </Layout.Grid>
             </div>
-            <div className="pt-dialog-footer">
-                <div className="pt-dialog-footer-actions">
+            <div className="bp3-dialog-footer">
+                <div className="bp3-dialog-footer-actions">
                     <Button
                         intent={Intent.SUCCESS}
                         text="Sign In"

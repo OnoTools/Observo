@@ -194,12 +194,12 @@ class ProjectViewer extends Component {
                         <Layout.Grid col height="20px" />
                     </Layout.Grid>
                 </Layout.Grid>
-                <Layout.Grid col style={{ flex: '0 0 auto', height: 100, marginLeft: 10 }}>
+                <Layout.Grid col style={{ flex: '0 0 auto', height: 50, marginLeft: 10 }}>
                     <Layout.Grid style={{ flex: '0 0 auto', width: 60 }}>
                         <Tooltip content="Go back" position={Position.LEFT}>
-                            <Button id="back" onClick={this.goBack.bind(this)}>
+                            <Button id="back" onClick={this.goBack.bind(this)} style={{ height: 50, width: 50 }}>
                                 <Layout.Box>
-                                    <Icon icon="chevron-left" style={{ width: 30, height: 30 }} />
+                                    <Icon icon="chevron-left"  />
                                 </Layout.Box>
                             </Button>
                         </Tooltip>
