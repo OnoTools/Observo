@@ -63,6 +63,7 @@ export default class Home extends Component {
                             }
                         }
                     }
+                    
                 }
             },
             updates: {
@@ -122,11 +123,36 @@ export default class Home extends Component {
                         }
                     }
                 }
-            }
+            },
+            developer: {
+                display: "Developer",
+                icon: "code",
+                selected: false,
+                sections: {
+                    updates: {
+                        display: "Debug",
+                        list: {
+                            toggleLoading: {
+                                display: "Plugin Selection",
+                                type: "TOGGLE",
+                                options: {
+                                    selected: false
+                                }
+                            },
+                            aboutText: {
+                                display: `Only load selected plugins`,
+                                type: "TEXT",
+                                options: {}
+
+                            }
+                        }
+                    }
+                }
+            },
         }
     }
-    settingChange() {
-        //changed?
+    settingChange(settings) {
+        stash.set("settings", settings)
     }
     /**
      * OpenHelp - Opens Help Drawer

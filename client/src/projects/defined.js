@@ -9,7 +9,7 @@
 require("amd-loader");
 //var { transform } = require("babel-core");
 var EventEmitter = require('events').EventEmitter;
-const startTime = process.hrtime()
+var startTime = process.hrtime()
 class Logging {
     constructor() {
         this.prefix = this.color("$3 Observo $f|")
@@ -136,7 +136,30 @@ class Manager extends EventEmitter {
         this.defined = {}
         this.pass = false
         this.moduleList = []
-        this.transform = (c, n) => {return `//# sourceURL=${n.toUpperCase()}\n${c}`}
+        this.transform = (c, n) => { return `//# sourceURL=${n.toUpperCase()}\n${c}` }
+        this.forceRun = false
+        this.doNotLoad = {}
+    }
+    start() {
+        startTime = process.hrtime()
+        this.emit("start")
+    }
+    disableModule(section, name) {
+        if (this.doNotLoad[section] == null) {
+            this.doNotLoad[section] = {}
+        }
+        this.doNotLoad[section][name] = true
+    }
+    canContinue(section, name) {
+        if (this.doNotLoad[section] == null) {
+            this.doNotLoad[section] = {}
+        }
+        if (this.doNotLoad[section][name] == true) {
+            console.log("DIDNT LOAD - " + name)
+            return false
+        } else {
+            return true
+        }
     }
     /**
      * SetDefinedID - Sets the DEFINED namespace used in a plugin/api
@@ -191,7 +214,15 @@ class Manager extends EventEmitter {
                                 //Load the module (but do it as TEXT not as a require)
                                 require('fs').readFile(main, 'utf8', (err, data) => {
                                     if (err) { console.log("[Defined] Cannot load " + json.main + "!") }
-                                    else {self.run(data, section, json.name, allowRequire)}
+                                    else {
+                                        if (self.forceRun) {
+                                            self.run(data, section, json.name, allowRequire)
+                                        } else {
+                                            self.on("start", () => {
+                                                self.run(data, section, json.name, allowRequire)
+                                            })
+                                        }
+                                    }
                                 });
                             } else {
                                 console.log("[Loader] Has no 'main' file?")
@@ -213,105 +244,111 @@ class Manager extends EventEmitter {
      * @param {Boolean} allowRequire 
      */
     run(code, section, name, allowRequire) {
-        //Custom Console to pass onto a MODULE
-        let customConsole = {
-            log: (message) => {
-                log.log(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$f${message}`)}`)
-            },
-            info: (message) => {
-                log.info(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$3${message}`)}`)
-            },
-            error: (message) => {
-                log.error(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$4${message}`)}`)
+        if (this.canContinue(section, name)) {
+            //Custom Console to pass onto a MODULE
+            let customConsole = {
+                log: (message) => {
+                    log.log(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$f${message}`)}`)
+                },
+                info: (message) => {
+                    log.info(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$3${message}`)}`)
+                },
+                error: (message) => {
+                    log.error(`[${section.toUpperCase()}][${name.toUpperCase()}] ${log.color(`$4${message}`)}`)
+                }
             }
-        }
-        let customRequire = (module) => { customConsole.error(`REQURING of '${module}' is not allowed`) }
-        if (allowRequire) {
-            customRequire = require
-        }
-        //ALL BELOW ARE DEFINED VARAIBLES WHICH NEED CLEARING (setting to null)
-        var indexedDB = null;
-        var location = null;
-        var navigator = null;
-        var onerror = null;
-        var onmessage = null;
-        var performance = null;
-        var self = null;
-        var webkitIndexedDB = null;
-        var postMessage = null;
-        var close = null;
-        var openDatabase = null;
-        var openDatabaseSync = null;
-        var webkitRequestFileSystem = null;
-        var webkitRequestFileSystemSync = null;
-        var webkitResolveLocalFileSystemSyncURL = null;
-        var webkitResolveLocalFileSystemURL = null;
-        var addEventListener = null;
-        var dispatchEvent = null;
-        var removeEventListener = null;
-        var dump = null;
-        var onoffline = null;
-        var ononline = null;
-        var importScripts = null;
-        var application = null;
-        let global = null
-        let process = null
-        let exports = null
-        let __dirname = null
-        let __filename = null
-        let run = null
+            let customRequire = (module) => { customConsole.error(`REQURING of '${module}' is not allowed`) }
+            if (allowRequire) {
+                customRequire = require
+            }
+            //ALL BELOW ARE DEFINED VARAIBLES WHICH NEED CLEARING (setting to null)
+            var indexedDB = null;
+            var location = null;
+            var navigator = null;
+            var onerror = null;
+            var onmessage = null;
+            var performance = null;
+            var self = null;
+            var webkitIndexedDB = null;
+            var postMessage = null;
+            var close = null;
+            var openDatabase = null;
+            var openDatabaseSync = null;
+            var webkitRequestFileSystem = null;
+            var webkitRequestFileSystemSync = null;
+            var webkitResolveLocalFileSystemSyncURL = null;
+            var webkitResolveLocalFileSystemURL = null;
+            var addEventListener = null;
+            var dispatchEvent = null;
+            var removeEventListener = null;
+            var dump = null;
+            var onoffline = null;
+            var ononline = null;
+            var importScripts = null;
+            var application = null;
+            let global = null
+            let process = null
+            let exports = null
+            let __dirname = null
+            let __filename = null
+            let run = null
 
-        //Defined Object
-        let defined = {
-            //Register a MODULE
-            register: (id, services) => {
-                this.defined[section][name].services = services
-                this.defined[section][name].registered = true
+            //Defined Object
+            let defined = {
+                //Register a MODULE
+                register: (id, services) => {
+                    this.defined[section][name].services = services
+                    this.defined[section][name].registered = true
 
-                this.checkMounting()
-            },
-            //BUILD A CUSTOM MOUNT
-            onCustomMount: (callback) => {
-                this.on('mount-custom', () => {
-                    let data = this.getCustomServices(section, name)
-                    callback(data)
-                });
-            },
-            //BUILT A NORMAL MOUNT (with callback naming)
-            onMount: (callback) => {
-                /*const nameFunction = function (fn, name) {
-                    return Object.defineProperty(fn, 'name', { value: name, configurable: true });
-                };*/
-                this.on('mount-imports', () => {
-                    let data = this.getGlobalServices(section, name)
-                    //callback = nameFunction(callback, name)
-                    callback(data)
-                });
-            },
-            //GET ALL DEFINED PACKAGE (can be use for settings, etc)
-            getDefined: () => {
-                let local = {}
-                for (let _section in this.defined) { //Loop them
-                    local[_section] = {} //Get object of module 
-                    for (let _name in this.defined[_section]) {
-                        if (_name != "__customRegisters") { //Check to see if __customRegisters was for loop, if so ignore it
-                            local[_section][_name] = {}
-                            local[_section][_name].package = this.defined[_section][_name].package
+                    this.checkMounting()
+                },
+                //BUILD A CUSTOM MOUNT
+                onCustomMount: (callback) => {
+                    this.on('mount-custom', () => {
+                        let data = this.getCustomServices(section, name)
+                        callback(data)
+                    });
+                },
+                //BUILT A NORMAL MOUNT (with callback naming)
+                onMount: (callback) => {
+                    /*const nameFunction = function (fn, name) {
+                        return Object.defineProperty(fn, 'name', { value: name, configurable: true });
+                    };*/
+                    this.on('mount-imports', () => {
+                        let data = this.getGlobalServices(section, name)
+                        //callback = nameFunction(callback, name)
+                        callback(data)
+                    });
+                },
+                //GET ALL DEFINED PACKAGE (can be use for settings, etc)
+                getDefined: () => {
+                    let local = {}
+                    for (let _section in this.defined) { //Loop them
+                        local[_section] = {} //Get object of module 
+                        for (let _name in this.defined[_section]) {
+                            if (_name != "__customRegisters") { //Check to see if __customRegisters was for loop, if so ignore it
+                                local[_section][_name] = {}
+                                local[_section][_name].package = this.defined[_section][_name].package
+                            }
                         }
                     }
+                    return local
                 }
-                return local
             }
+            //Grab the GLOBAL ID (whatever has be set), and use it as the MODULE NAMSPACE (keep in mind the word "defined" will still work anywhere)
+            let id = this.id
+            let newCode = `module.exports = function(require, console, ${id}, log) { ${code} }`;
+            self = null
+            newCode = this.transform(newCode, name)
+            let launchCode = eval(newCode);
+            //Run the code
+            launchCode(customRequire, console, defined, null);
+        } else {
+            this.defined[section][name].registered = true
+            this.checkMounting()
         }
-        //Grab the GLOBAL ID (whatever has be set), and use it as the MODULE NAMSPACE (keep in mind the word "defined" will still work anywhere)
-        let id = this.id
-        let newCode = `module.exports = function(require, console, ${id}, log) { ${code} }`;
-        self = null
-        newCode = this.transform(newCode, name)
-        let launchCode = eval(newCode);
-        //Run the code
-        launchCode(customRequire, console, defined, null);
     }
+
     /**
      * CheckMounting - Checks to see if all plugins have mounted registers
      */
@@ -330,7 +367,7 @@ class Manager extends EventEmitter {
             this.pass = true
             let z = ""
             for (let m in this.moduleList) {
-                z = `${z}${ this.moduleList[m].toUpperCase()} `
+                z = `${z}${this.moduleList[m].toUpperCase()} `
             }
             log.log(`$DLoading ( ${z})`)
             this.emit('mount-imports'); //Mount all GLOBAL imports
@@ -359,7 +396,7 @@ class Manager extends EventEmitter {
                     if (this.defined[_section][_name]) {
                         let local = {}
                         let me = this
-                        for (let service in this.defined[_section][_name].services.GLOBAL)  {
+                        for (let service in this.defined[_section][_name].services.GLOBAL) {
                             local[service] = function () {
                                 var args = Array.prototype.slice.call(arguments);
                                 args.unshift(name);
@@ -419,6 +456,8 @@ function PluginManager() { }
 PluginManager.prototype.addDefined = function (id, path, allowRequire = null, customRegisters) { return m.addDefined.call(this, id, path, allowRequire, customRegisters); }
 PluginManager.prototype.onAppReady = function (callback) { m.appReady(callback) }
 PluginManager.prototype.mountAll = function () { m.checkMounting() }
-PluginManager.prototype.transformCode = function (code) { m.transformCode(code)}
+PluginManager.prototype.transformCode = function (code) { m.transformCode(code) }
 PluginManager.prototype.setDefinedID = function (id) { m.setDefinedID(id) }
+PluginManager.prototype.disableModule = function (section, id) { m.disableModule(section, id) }
+PluginManager.prototype.start = function () { m.start() }
 module.exports = PluginManager;

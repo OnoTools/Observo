@@ -328,10 +328,10 @@ export default class Settings extends Component {
             isOpen={this.props.isOpen}
             onClose={this.props.onClose}
             title="Settings"
-            style={{ width: 500, height: 350 }}
+            backdropClassName="settings"
             transitionDuration={0}
         >
-            <Layout.Grid height="100%" width="100%" background="lightgray" className={Classes.ELEVATION_4} >
+            <Layout.Grid height="100%" width="100%" background="lightgray" style={{top: 30}} className={Classes.ELEVATION_4} >
                 <Layout.Grid row>
                     <Layout.Grid row height="40px" style={{ borderBottom: "1px solid #C9D0D5" }}>
                         <div className="bp3-dialog-header" style={{ margin: 0, height: 30, width: "100%" }} ><Icon icon="cog" />

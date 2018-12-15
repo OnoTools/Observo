@@ -13,8 +13,6 @@ require("babel-polyfill")
 //TODO: REMOVE AS ITS DEBUG
 stash.set('serverList', { "butter": { name: "Butter", ip: "76915f67.ngrok.io" }, "local": { name: "local", ip: "localhost:3000" } });
 
-
-
 const sleep = (ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -63,7 +61,7 @@ export default class App extends Component {
             globalProvider: {
                 globalEvent: objectEvent
             },
-            disableAnimations: true
+            disableAnimations: false
         }
     }
     /**
@@ -204,6 +202,7 @@ export default class App extends Component {
 
         })
         socketObject.on('connect', function () {
+            self.setState({showSignInDialog: true})
             self.state.globalProvider.globalEvent.emit("SOCKET:connected", { global: io, client: socketObject })
             socketObject.on('disconnect', function () {
                 console.log("")
@@ -225,7 +224,7 @@ export default class App extends Component {
                 socketObject.close()
             })
         })
-        this.setState({ serverProperties: { ip: ip, name: name }, userName: null, userPassword: null, showSignInDialog: true })
+        this.setState({ serverProperties: { ip: ip, name: name }, userName: null, userPassword: null, showSignInDialog: false })
         this.socketObject = socketObject
     }
     authSignIn() {
@@ -249,7 +248,6 @@ export default class App extends Component {
             this.moveTo(-1, 0, 0);
             this.setState({ showSignInDialog: false })
         }
-
     }
     renderShowSignInDialog() {
         return <Dialog

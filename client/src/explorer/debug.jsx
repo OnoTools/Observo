@@ -22,19 +22,23 @@ export default class Debug extends Component {
                     bounds={{ left: 10, top: 40, right: 580, bottom: 600 }}
                 >
                     <div style={{ width: 300, height: 300 }}>
-                        <Layout.Grid col>
-                            <Layout.Grid col height="40px" style={{ borderBottom: "1px solid #C9D0D5" }}>
-                                <div className="pt-dialog-header" style={{ margin: 0 }}><Icon icon="code" />
-                                    <h4 className="pt-dialog-header-title">Debug</h4>
+                        <Layout.Grid row>
+                            <Layout.Grid row height="40px" style={{ borderBottom: "1px solid #C9D0D5" }}>
+                                <div className="bp3-dialog-header" style={{ margin: 0 }}><Icon icon="code" />
+                                    <h4 className="bp3-dialog-header-title">Debug</h4>
                                 </div>
                             </Layout.Grid>
 
-                            <Layout.Grid row>
-                                <Layout.Grid col width="300px" height="200px" background="lightgray">
+                            <Layout.Grid col>
+                                <Layout.Grid row width="300px" height="200px" background="lightgray">
                                     <p style={{ paddingLeft: 10, marginTop: 5, fontSize: 14 }} >
+                                        Observo: 2.0.0 Beta <br/>
                                         OS: {os.platform()} <br/>
                                         Arch: {os.arch()} <br/>
-                                        CPU: {os.cpus()[0].model}
+                                        CPU: {os.cpus()[0].model}<br/>
+                                        Chrome: {process.versions["chrome"]}<br/>
+                                        Electron: {process.versions["electron"]}<br/>
+                                        v8: {process.versions["v8"]}<br/>
                                     </p>
                       
                                 </Layout.Grid>

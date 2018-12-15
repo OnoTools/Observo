@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Button, Intent, Spinner, Tree, ITreeNode, Tooltip, Icon, ProgressBar, Navbar, Alignment, ButtonGroup, Menu, MenuItem, Classes } from "@blueprintjs/core";
+import { Button, Checkbox, ProgressBar, Navbar, Alignment, ButtonGroup, Menu, MenuItem, Classes } from "@blueprintjs/core";
 import { Window, TitleBar, Text } from 'react-desktop/windows';
 import { Layout } from "@importcore/crust"
 import { GlobalContext } from "global-context"
@@ -26,11 +26,35 @@ require("babel-polyfill")
 
 let DefinedManager = require("./defined")
 
-export default class App extends Component {
+
+/**
+ * Defined - Defined is a multi purpose plugin and API loader, made for Observo. 
+ * The code below defines:
+ * - Code Tranformation (JSX for React, Rest Spread, & Async Options) 
+ * - 
+ */
+let manager = new DefinedManager()
+manager.setDefinedID("Observo") //Custom NAMESPACE
+var { transform } = require("babel-core");
+manager.transformCode((code, name) => {
+    code = `//# sourceURL=${name.toUpperCase()}\n
+            ${code}`
+    let newCode = transform(code, {
+        "presets": [require.resolve("babel-preset-env"), require.resolve("babel-preset-react")],
+        "plugins": [
+            require.resolve("babel-plugin-transform-async-to-generator"),
+            require.resolve("babel-plugin-transform-object-rest-spread")
+        ],
+    }).code
+    return newCode
+})
+var DEFINED_API = manager.addDefined("API", "./api", true, ["CLIENT"])
+var DEFINED_PLUGIN = manager.addDefined("PLUGINS", "./plugins", false, [])
+
+
+class PluginRender extends Component {
     constructor() {
-        super();
-        //Create a global event listner, used by the GlobalContext Provider
-        var objectEvent = new events.EventEmitter();
+        super()
 
         //States
         this.state = {
@@ -38,40 +62,10 @@ export default class App extends Component {
             selectedTab: null,
             removeTab: null,
             closeTab: {},
-            openTabs: {},
-            globalProvider: {
-                globalEvent: objectEvent
-            }
+            openTabs: {}
         }
 
-        /**
-         * Defined - Defined is a multi purpose plugin and API loader, made for Observo. 
-         * The code below defines:
-         * - Code Tranformation (JSX for React, Rest Spread, & Async Options) 
-         * - 
-         */
-        let manager = new DefinedManager()
-        manager.setDefinedID("Observo") //Custom NAMESPACE
-        var { transform } = require("babel-core");
-        manager.transformCode((code, name) => {
-            code = `//# sourceURL=${name.toUpperCase()}\n
-            ${code}`
-            let newCode = transform(code, {
-                "presets": [require.resolve("babel-preset-env"), require.resolve("babel-preset-react")],
-                "plugins": [
-                    require.resolve("babel-plugin-transform-async-to-generator"),
-                    require.resolve("babel-plugin-transform-object-rest-spread")
-                ],
-            }).code
-            return newCode
-        })
-        this.api = manager.addDefined("API", "./api", true, ["CLIENT"])
-        this.plugin = manager.addDefined("PLUGINS", "./plugins", false, [])
 
-        manager.onAppReady(() => {
-            console.log("%cOBSERVO", "color: cyan; font-size: 50px")
-            console.log("%cMade by OnoTools [@ImportProgram]", "font-weight: bold; font-size: 24px")
-        })
     }
     /**
      * addTab - Adds a tab to the DocTab Component
@@ -144,17 +138,17 @@ export default class App extends Component {
         let args = managerLocal.parseArgs()
         let socketObject = io.connect(`http://${args.ip}/core/`)
         socketObject.on("connect", () => {
-            this.state.globalProvider.globalEvent.emit("SOCKET:connected", { global: io, client: socketObject, clientPlugins: this.plugin })
+            this.props.globalEvent.emit("SOCKET:connected", { global: io, client: socketObject, clientPlugins: DEFINED_PLUGIN })
             socketObject.emit("auth_signIn", { authKey: args.authKey })
             socketObject.on("auth_vaildSignin", (data) => {
-                this.api.auth.services.API.updateAuth(data)
+                DEFINED_API.auth.services.API.updateAuth(data)
                 socketObject.emit("core_getProject", { project: args.project })
             })
         })
         /**
          * @event PLUGIN:open This is called by the sidebar tree view, it the click event when a page needs to open a plugin  
          */
-        this.state.globalProvider.globalEvent.on("PLUGIN:open", (nodeData) => {
+        this.props.globalEvent.on("PLUGIN:open", (nodeData) => {
             if (!nodeData.hasCaret) {
                 let name = nodeData.label
                 if (nodeData.prefix) {
@@ -203,11 +197,11 @@ export default class App extends Component {
             if (openPlugin != null) {
                 let style = { display: "none" }
                 if (tab == this.state.selectedTab) {
-                    console.log(this.api.page.services.API.getHeightOffset(openPlugin.plugin))
-                    console.log(this.api.page.services.API.getWidthOffset(openPlugin.plugin))
-                    style = { height: (this.state.areaHeight + this.api.page.services.API.getHeightOffset(openPlugin.plugin)), width: (this.state.areaWidth + this.api.page.services.API.getWidthOffset(openPlugin.plugin))}
+                    console.log(DEFINED_API.page.services.API.getHeightOffset(openPlugin.plugin))
+                    console.log(DEFINED_API.page.services.API.getWidthOffset(openPlugin.plugin))
+                    style = { height: (this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openPlugin.plugin)), width: (this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openPlugin.plugin)) }
                 }
-                let CustomObject = this.api.page.services.API.getPage(openPlugin.plugin)
+                let CustomObject = DEFINED_API.page.services.API.getPage(openPlugin.plugin)
                 let closeTab = this.state.closeTab
                 if (closeTab[tab] == null) {
                     closeTab[tab] = false
@@ -218,7 +212,7 @@ export default class App extends Component {
                 items.push(
                     <div key={tab} style={style}>
                         <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
-                            <CustomObject locale="en" height={(this.state.areaHeight + this.api.page.services.API.getHeightOffset(openPlugin.plugin))} width={(this.state.areaWidth + this.api.page.services.API.getWidthOffset(openPlugin.plugin))} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
+                            <CustomObject locale="en" height={(this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openPlugin.plugin))} width={(this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openPlugin.plugin))} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
                         </ErrorBoundary>
 
                     </div>)
@@ -234,38 +228,158 @@ export default class App extends Component {
         const options = {
             selectOnLineNumbers: true
         };
+        return <Layout.Grid canvas>
+            <Layout.Grid col>
+                {/*Sidebar*/}
+                <Sidebar localPlugins={this.props.localPlugins} />
+                {/*User Bar*/}
+                <Layout.Grid row>
+                    <Layout.Grid col height="50px">
+
+                        {/*Doctabs*/}
+                        <Layout.Grid background="lightblue">
+                            <DocTabs key="tabs" tabs={this.state.tabs} selected={this.state.selectedTab} remove={this.state.removeTab} onChange={this.onDocTabChange.bind(this)} onSelect={this.onSelected.bind(this)} onClose={this.onTabClose.bind(this)} />
+                        </Layout.Grid>
+                        <Layout.Grid width="120px">
+                            <Navbar>
+                                <Navbar.Group align={Alignment.LEFT}>
+                                    <Button className="pt-minimal" icon="user" />
+                                    <Button className="pt-minimal" icon="notifications" />
+                                    <Button className="pt-minimal" icon="cog" />
+                                </Navbar.Group>
+                            </Navbar>
+                        </Layout.Grid>
+                    </Layout.Grid>
+                    <Layout.Grid>
+                        {this.renderPages()}
+                    </Layout.Grid>
+                </Layout.Grid>
+            </Layout.Grid>
+        </Layout.Grid>
+    }
+}
+
+let PluginConsumer = (props) => {
+    return <GlobalContext.Consumer>
+        {context => <PluginRender {...props} globalEvent={context.globalEvent} />}
+    </GlobalContext.Consumer>
+}
+
+export default class App extends Component {
+    constructor() {
+        super()
+        //Create a global event listner, used by the GlobalContext Provider
+        var objectEvent = new events.EventEmitter();
+        this.state = {
+            globalProvider: {
+                globalEvent: objectEvent
+            },
+            settings: stash.get("settings"),
+            usedPlugins: stash.get("pluginsAllowed"),
+            mode: 0
+        }
+        console.log(stash.get("settings"))
+    }
+    renderPlugins() {
+        console.log(this.state.mode)
+        if (this.state.mode == 2) {
+            console.log("loader")
+            return <PluginConsumer localPlugins={this.state.localPlugins} />
+        }
+    }
+    componentDidMount() {
+        let mode = 0
+
+        let usedPlugins = this.state.usedPlugins
+        if (this.state.usedPlugins == null) {
+            stash.set("pluginsAllowed", {})
+            usedPlugins = {}
+        }
+        let localPlugins = {}
+        for (let plugin in DEFINED_PLUGIN) {
+            console.log(plugin)
+            if (plugin != "__customRegisters") {
+                if (usedPlugins[plugin] == null) {
+                    localPlugins[plugin] = true
+                } else {
+                    localPlugins[plugin] = usedPlugins[plugin]
+                }
+            }
+        }
+        if (this.state.settings.developer.updates.toggleLoading.selected == false) {
+            mode = 2
+            manager.start()
+        }
+        this.setState({ localPlugins, usedPlugins, mode })
+
+
+        let this_ = this
+        manager.onAppReady(() => {
+            console.log("%cOBSERVO", "color: cyan; font-size: 50px")
+            console.log("%cMade by OnoTools [@ImportProgram]", "font-weight: bold; font-size: 24px")
+            this_.setState({ mode: 2 })
+        })
+
+    }
+    onPluginSelection(name) {
+        let localPlugins = this.state.localPlugins
+        if (localPlugins[name] != null) {
+            if (localPlugins[name]) localPlugins[name] = false
+            else {
+                localPlugins[name] = true
+            }
+        }
+        this.setState({ localPlugins })
+        stash.set("pluginsAllowed", localPlugins)
+    }
+    onPluginLoad() {
+        for (let plugin in this.state.localPlugins) {
+            if (this.state.localPlugins[plugin] == false) {
+                manager.disableModule("plugins", plugin)
+            }
+        }
+        this.setState({ mode: 1 })
+        manager.start()
+
+    }
+    renderChooser() {
+        let renderPlugins = () => {
+            let items = []
+            for (let plugin in this.state.localPlugins) {
+                items.push(<Layout.Grid key={plugin}>
+                    <Checkbox checked={this.state.localPlugins[plugin]} onChange={this.onPluginSelection.bind(this, plugin)}>
+                        <strong>{plugin.toUpperCase()}</strong>
+                    </Checkbox>
+                </Layout.Grid>)
+            }
+            return items
+        }
+        if (this.state.mode == 0) {
+            return <Layout.Grid canvas style={{ margin: 30 }}>
+                <Layout.Grid center>
+                    <div>
+                        <Layout.Grid style={{ border: "1px solid black" }}>
+                            <h1>Plugin Selection</h1>
+                            <Layout.Grid row>
+                                {renderPlugins()}
+                            </Layout.Grid>
+                            <Button onClick={this.onPluginLoad.bind(this)}>Load</Button>
+                        </Layout.Grid>
+                    </div>
+                </Layout.Grid>
+            </Layout.Grid>
+        }
+    }
+    renderLoader() {
+        return <h1>loading</h1>
+    }
+    render() {
         return (
             <Window color="rgba(0, 153, 191, 0)" background="rgba(0, 153, 191, 1)">
                 <TitleBar background="#00acd7" title={<span className="observo-text">OBSERVO</span>} controls />
                 <GlobalContext.Provider value={this.state.globalProvider}>
-                    <Layout.Grid canvas>
-                        <Layout.Grid col>
-                            {/*Sidebar*/}
-                            <Sidebar />
-                            {/*User Bar*/}
-                            <Layout.Grid row>
-                                <Layout.Grid col height="50px">
-
-                                    {/*Doctabs*/}
-                                    <Layout.Grid background="lightblue">
-                                        <DocTabs key="tabs" tabs={this.state.tabs} selected={this.state.selectedTab} remove={this.state.removeTab} onChange={this.onDocTabChange.bind(this)} onSelect={this.onSelected.bind(this)} onClose={this.onTabClose.bind(this)} />
-                                    </Layout.Grid>
-                                    <Layout.Grid width="120px">
-                                        <Navbar>
-                                            <Navbar.Group align={Alignment.LEFT}>
-                                                <Button className="pt-minimal" icon="user" />
-                                                <Button className="pt-minimal" icon="notifications" />
-                                                <Button className="pt-minimal" icon="cog" />
-                                            </Navbar.Group>
-                                        </Navbar>
-                                    </Layout.Grid>
-                                </Layout.Grid>
-                                <Layout.Grid>
-                                    {this.renderPages()}
-                                </Layout.Grid>
-                            </Layout.Grid>
-                        </Layout.Grid>
-                    </Layout.Grid>
+                    {this.renderPlugins()}
+                    {this.renderChooser()}
                 </GlobalContext.Provider>
             </Window>
 

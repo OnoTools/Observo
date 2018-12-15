@@ -253,7 +253,7 @@ Observo.onMount((imports) => {
                     projects[project].editor[event][day].core[section].members[member] = {}
                 }
                 projects[project].editor[event][day].core[section].members[member] = {profession}
-                console.log(JSON.stringify(projects))
+                //console.log(JSON.stringify(projects))
                 updateEditorTable(true)
                 
             })

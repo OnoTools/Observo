@@ -64,7 +64,7 @@ class Sidebar extends Component {
                         let localPlug = clientPlugins[pluginName]
                         let serverPlug = plugins[pluginName]
                         //Ingore the defined.js custom registers handler
-                        if (pluginName != "__customRegisters") {
+                        if (pluginName != "__customRegisters" && this.props.localPlugins[pluginName] != false) {
                             if (localPlug.package.name == name && localPlug.package.version == ver) {
                                 pass = true
                                 let lNode = {} 
@@ -109,11 +109,6 @@ class Sidebar extends Component {
                                 nodes.push(lNode)
                             } 
                         }
-                    }
-                    if (pass) {
-
-                    } else {
-                        alert("Yikes not all plugins can be found for this project? You can use what you have for now...")
                     }
                     loop++
                 }
