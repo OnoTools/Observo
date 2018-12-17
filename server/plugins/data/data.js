@@ -6,15 +6,18 @@ Observo.onMount((imports) => {
     console.log("MOUNTED")
     imports.api.database.hasDefaultPage()
     imports.api.socket.addHandler((global, client, uuid, project) => {
+        //Projects global variable (for acesses to anything)
         if (projects[project] == undefined) {
             projects[project] = {}
             projects[project].store = {}
             projects[project].store.listings = null
             projects[project].store.editing = {}
         }
+        //Use the page we want for the project
         imports.api.page.usePage(global, client, (global, client, page) => {
             let db = imports.api.database.connect(project, page, () => {
 
+                //Clears all editing for this user.
                 let clearEditing = () => {
                     for (let store in projects[project].store.editing) {     
                         if (projects[project].store.editing[store] == uuid) {
@@ -44,6 +47,7 @@ Observo.onMount((imports) => {
                         global.emit("data_storeListings", projects[project].store.listings)
                     })
                 })
+                //Updates a store based on what a user changed the text to
                 client.on("data_updateStore", ({ store, name }) => {
                     if (projects[project].store.listings[store] != null) {
                         console.log(name)
@@ -52,6 +56,7 @@ Observo.onMount((imports) => {
                         //TODO: Update database as well
                     }
                 })
+                //When a user wants to edit a store
                 client.on("data_editStore", ({ store }) => {
                     console.log(store)
                   
