@@ -86,6 +86,7 @@ Observo.onMount((imports) => {
                 })
                 //Check if new events are added to PLUGINS:events, this only needs to be made once per project instance. 
                 imports.plugins.events.onNewEvent(project, (events) => {
+                    console.log("new event")
                     //Convert it to a proper object
                     let data = {}
                     for (let e in events) {
