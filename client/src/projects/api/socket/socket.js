@@ -11,5 +11,8 @@ Observo.register(null, {
             let socketObject = io.connect(`http://${args.ip}/plugins/${name}`)
             return socketObject
         },
+        end: (name, socket) => {
+            socket.emit("end")
+        }
     }
 })

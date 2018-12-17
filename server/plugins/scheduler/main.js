@@ -107,6 +107,11 @@ Observo.onMount((imports) => {
                     projects[project].fetchedMembers = members
                     client.emit("scheduler_memberList", members)
                 })
+                imports.plugins.team.updateMembers(project, (members) => {
+                    console.log("THIS HAS UPDATED")
+                    projects[project].fetchedMembers = members
+                    global.emit("scheduler_memberList", members)
+                })
                 //TODO: Add On Event for the members
             } else {
                 let members = projects[project].fetchedMembers

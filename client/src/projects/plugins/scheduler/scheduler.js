@@ -23,7 +23,7 @@ Observo.onMount((imports) => {
             let socketObject = this.props.socketObject
             console.log(socketObject)
             socketObject.on("scheduler_professions_updateList", (professions) => {
-                this.setState({ professions })  
+                this.setState({ professions })
             })
             socketObject.on("scheduler_professions_editing", ({ editors }) => {
                 console.log("EDITIORS")
@@ -72,7 +72,7 @@ Observo.onMount((imports) => {
             }
         }
         async onSelect(uuid) {
-            this.setState({selected: uuid})
+            this.setState({ selected: uuid })
             if (this.props.onSelect) {
                 this.props.onSelect(uuid)
             }
@@ -83,8 +83,12 @@ Observo.onMount((imports) => {
         renderItems() {
             let items = []
             let loop = 0
-            let disabled = false
+
+            items.push(<Layout.Grid col style={{ marginBottom: 10, padding: 10 }} background="white">
+                <Button className="pt-minimal"  onClick={this.onSelect.bind(this, null)} >Clear Selection</Button>
+            </Layout.Grid>)
             for (let p in this.state.professions) {
+                let disabled = false
                 let profession = this.state.professions[p]
                 let uuid = profession.uuid
                 //CHECK IF EDITING
@@ -103,11 +107,15 @@ Observo.onMount((imports) => {
                         }
                     }
                 }
+                let titleStyle = {}
+                if (uuid == this.state.selected) {
+                    titleStyle = { fontWeight: "bold" }
+                }
                 items.push(<Layout.Grid col style={{ marginBottom: 10, padding: 10 }} background={background}>
-                    <Layout.Grid>{profession.name}</Layout.Grid>
-                    <Layout.Grid width={30}><Button className="pt-minimal" icon="add" onClick={this.onSelect.bind(this, uuid)}> </Button></Layout.Grid>
-                    <Layout.Grid width={30}><Button className="pt-minimal" icon="edit" disabled={disabled} onClick={this.onEdit.bind(this, uuid)} /> </Layout.Grid>
-                    <Layout.Grid width={30}><Button className="pt-minimal" icon="cross" intent={Intent.DANGER} onClick={this.onRemove.bind(this, uuid)} /></Layout.Grid>
+                    <Layout.Grid style={titleStyle}>{profession.name}</Layout.Grid>
+                    <Layout.Grid width={30} style={{ marginRight: 10 }}><Button className="pt-minimal" icon="add" onClick={this.onSelect.bind(this, uuid)} /></Layout.Grid>
+                    <Layout.Grid width={30} style={{ marginRight: 10 }}><Button className="pt-minimal" icon="edit" disabled={disabled} onClick={this.onEdit.bind(this, uuid)} /> </Layout.Grid>
+                    <Layout.Grid width={30} style={{ marginRight: 10 }}><Button className="pt-minimal" icon="cross" intent={Intent.DANGER} onClick={this.onRemove.bind(this, uuid)} /></Layout.Grid>
                 </Layout.Grid>)
                 loop++
             }
@@ -183,25 +191,25 @@ Observo.onMount((imports) => {
         }
         async onUnitofProgressChange(event) {
             if (this.state.isEditing == imports.api.auth.uuid()) {
-                this.setState({unit: event.target.value})
+                this.setState({ unit: event.target.value })
             }
             this.socketObject.emit("scheduler_editor_updateSettings", { type: "unit", value: event.target.value })
         }
         async onIntervalInput(event) {
             if (this.state.isEditing == imports.api.auth.uuid()) {
-                this.setState({interval: event.target.value})
+                this.setState({ interval: event.target.value })
             }
             this.socketObject.emit("scheduler_editor_updateSettings", { type: "interval", value: event.target.value })
         }
         async onStartInput(event) {
             if (this.state.isEditing == imports.api.auth.uuid()) {
-                this.setState({start: event.target.value})
+                this.setState({ start: event.target.value })
             }
             this.socketObject.emit("scheduler_editor_updateSettings", { type: "start", value: event.target.value })
         }
         async onEndInput(event) {
             if (this.state.isEditing == imports.api.auth.uuid()) {
-                this.setState({end: event.target.value})
+                this.setState({ end: event.target.value })
             }
             this.socketObject.emit("scheduler_editor_updateSettings", { type: "end", value: event.target.value })
         }
@@ -328,7 +336,7 @@ Observo.onMount((imports) => {
                         this.setState({ unit, interval, start, end, isEditing: isEditingSettings })
                     })
                     socketObject.on("scheduler_professions_updateList", (professions) => {
-                        this.setState({ professions })  
+                        this.setState({ professions })
                     })
                 })
             })
@@ -361,15 +369,15 @@ Observo.onMount((imports) => {
         async handleSidebarTabChange(sidebarTabId) {
             this.setState({ sidebarTabId })
         }
-        async onSetProfession (section , member) {
+        async onSetProfession(section, member) {
             let profession = this.state.selectedProfession
             console.log("PROFFESIOndsndsijgkskudf")
             console.log(profession)
-            this.socketObject.emit("scheduler_editor_selectProfession", {section, member, profession})
+            this.socketObject.emit("scheduler_editor_selectProfession", { section, member, profession })
         }
         async onSelectProfession(selectedProfession) {
-            
-            this.setState({selectedProfession})
+
+            this.setState({ selectedProfession })
         }
         /**
          * Renders Events (in select box)
@@ -395,7 +403,7 @@ Observo.onMount((imports) => {
                 </div>
             } else {
                 let items = []
-                items.push(<Layout.Grid style={{ padding: 3, borderBottom: "1px solid gray", fontWeight: "bold", fontSize: 18 }} >Name</Layout.Grid>)
+                items.push(<Layout.Grid width={100} style={{ padding: 3, borderBottom: "1px solid gray", fontWeight: "bold", fontSize: 18 }} >Name</Layout.Grid>)
                 for (let m in this.state.members) {
                     let member = this.state.members[m]
                     let uuid = member.uuid
@@ -415,15 +423,16 @@ Observo.onMount((imports) => {
                     let menu = <Menu>
                         <MenuItem icon={icon} text={visibleText} onClick={this.onScheduleVisUser.bind(this, uuid)} />
                     </Menu>
-
-                    items.push(<Layout.Grid background={background} onContextMenu={(event) => { ContextMenu.show(menu, { left: event.clientX, top: event.clientY }, () => { }) }} style={{ padding: 3, borderBottom: "1px solid gray" }} >{member.firstName}, {member.lastName}</Layout.Grid>)
+                    let lastName = member.lastName
+                    lastName = lastName.substring(0,1)
+                    items.push(<Layout.Grid background={background} onContextMenu={(event) => { ContextMenu.show(menu, { left: event.clientX, top: event.clientY }, () => { }) }} style={{ padding: 3, borderBottom: "1px solid gray", textOverflow: "ellipsis" }} >{member.firstName}, {lastName}</Layout.Grid>)
                 }
                 let columns = []
                 for (let c in this.state.editorData.core) {
                     let matchStart = (this.state.start - 1) + (this.state.interval * parseInt(c))
                     let matchEnd = (this.state.start - 1) + (this.state.interval * (parseInt(c) + 1))
                     console.log("MATCHEND:" + matchEnd)
-                    
+
                     let listRows = []
                     let background = "white"
 
@@ -443,11 +452,8 @@ Observo.onMount((imports) => {
                         let text = ""
                         if (this.state.editorData.core[c].members[uuid] != null) {
                             if (this.state.editorData.core[c].members[uuid].profession != null) {
-                                console.log(this.state.editorData.core[c].members[uuid].profession)
                                 for (let p in this.state.professions) {
                                     let profession = this.state.professions[p]
-                                    console.log("NOT: " + this.state.editorData.core[c].members[uuid].profession )
-                                    console.log("LIST: " + profession.uuid)
                                     if (this.state.editorData.core[c].members[uuid].profession == profession.uuid) {
                                         text = profession.name
                                     }
@@ -482,7 +488,7 @@ Observo.onMount((imports) => {
                     hideSettings = {}
                 }
                 items.push(<div key="prof" style={hideProf} >
-                    <Professions socketObject={this.socketObject} onSelect={this.onSelectProfession.bind(this)}/>
+                    <Professions socketObject={this.socketObject} onSelect={this.onSelectProfession.bind(this)} />
                 </div>)
                 items.push(<div key="settings" style={hideSettings} >
                     <Settings event={this.state.eventChoice} day={this.state.dayTabId} socketObject={this.socketObject} />

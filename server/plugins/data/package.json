@@ -1,12 +1,12 @@
 {
     "name": "data",
     "version": "1.0.0",
-    "main": "main.js",
+    "main": "data.js",
     "settings": {
-        "title": "Data",
-        "dynamic": true,
+        "title": "Data Store",
+        "dynamic": false,
         "icon": "database"
     },
-    "consumes": ["api:socket", "api:database"]
+    "consumes": ["api:socket", "api:database", "api:page"]
 
 }

@@ -31,6 +31,7 @@ class DBConnect {
         return con //Retsurn that connection to whatever is calling it
     }
     connect(database) {
+       
         if (this.connections[database] == null) {
             this.connections[database] = this.makeConnection(database)
         } 

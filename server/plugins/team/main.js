@@ -91,7 +91,6 @@ Observo.onMount((imports) => {
                     }
                     updateScoutList(false)
                 }
-
             }
             //IMPORTANT METHODS
             let updateMemberList = (useGlobal) => {
@@ -114,7 +113,7 @@ Observo.onMount((imports) => {
                         console.log(`Update Member List Globally`)
                         global.emit("team_updateMembers", members)
                         projects[project].members = members
-                        callEvent.emit("updateMembers", members)
+                        callEvent.emit("updateMembers", project, members)
                     } else {
                         client.emit("team_updateMembers", members)
                         projects[project].members = members
@@ -305,6 +304,24 @@ Observo.register(null, {
             let main = () => {
                 console.log("GETTING MEMEBERS")
                 callEvent.emit("getMembers", project, callback)
+            }
+            //Is the plugin ready?
+            if (ready) {
+                main()
+            } else {
+                //If not lets wait for it to send the event
+                callEvent.once("ready", () => {
+                    main()
+                })
+            }
+        },
+        updateMembers(name, project, callback) {
+            let main = () => {
+                callEvent.on("updateMembers", (_project, _members) => {
+                    if (project == _project) {
+                        callback(_members)
+                    }
+                })
             }
             //Is the plugin ready?
             if (ready) {
