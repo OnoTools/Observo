@@ -187,12 +187,10 @@ export default class App extends Component {
         let socketObject = io.connect(`http://${ip}/core/`)
         this.attemptConnect = true
         socketObject.on('connect_error', () => {
-            console.log("happens 1")
             if (self.attemptConnect) {
                 self.failedConnect = false
                 self.setState({ isSpinner: false })
                 setTimeout(() => {
-                    console.log("happens 1")
                     socketObject.close()
                     this.moveTo(-1, 0, 0)
                     self.setState({ isSpinner: true })

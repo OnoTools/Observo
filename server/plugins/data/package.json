@@ -1,7 +1,7 @@
 {
     "name": "data",
     "version": "1.0.0",
-    "main": "data.js",
+    "main": "improved.js",
     "settings": {
         "title": "Data Store",
         "dynamic": false,

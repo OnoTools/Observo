@@ -216,9 +216,11 @@ class Manager extends EventEmitter {
                                     if (err) { console.log("[Defined] Cannot load " + json.main + "!") }
                                     else {
                                         if (self.forceRun) {
+                                            self.defined[section][json.name].time = new Date()
                                             self.run(data, section, json.name, allowRequire)
                                         } else {
                                             self.on("start", () => {
+                                                self.defined[section][json.name].time = new Date()
                                                 self.run(data, section, json.name, allowRequire)
                                             })
                                         }
@@ -245,6 +247,7 @@ class Manager extends EventEmitter {
      */
     run(code, section, name, allowRequire) {
         if (this.canContinue(section, name)) {
+            console.log("passs")
             //Custom Console to pass onto a MODULE
             let customConsole = {
                 log: (message) => {
@@ -287,7 +290,6 @@ class Manager extends EventEmitter {
             var importScripts = null;
             var application = null;
             let global = null
-            let process = null
             let exports = null
             let __dirname = null
             let __filename = null
@@ -300,6 +302,9 @@ class Manager extends EventEmitter {
                     this.defined[section][name].services = services
                     this.defined[section][name].registered = true
 
+
+                    let t = this.defined[section][name].time
+                    this.doneLoading(section, name, new Date() - t)
                     this.checkMounting()
                 },
                 //BUILD A CUSTOM MOUNT
@@ -335,6 +340,7 @@ class Manager extends EventEmitter {
                     return local
                 }
             }
+            let process = null
             //Grab the GLOBAL ID (whatever has be set), and use it as the MODULE NAMSPACE (keep in mind the word "defined" will still work anywhere)
             let id = this.id
             let newCode = `module.exports = function(require, console, ${id}, log) { ${code} }`;
@@ -352,6 +358,14 @@ class Manager extends EventEmitter {
     /**
      * CheckMounting - Checks to see if all plugins have mounted registers
      */
+    isLoaded(callback) {
+        this.doneLoading = callback
+    }
+    doneLoading(section, name, time) {
+        if (this.doneCallback != null) {
+            this.doneCallback(section, name, time)
+        }
+    }
     checkMounting() {
         let pass = true
         for (let section in this.defined) {
@@ -459,5 +473,6 @@ PluginManager.prototype.mountAll = function () { m.checkMounting() }
 PluginManager.prototype.transformCode = function (code) { m.transformCode(code) }
 PluginManager.prototype.setDefinedID = function (id) { m.setDefinedID(id) }
 PluginManager.prototype.disableModule = function (section, id) { m.disableModule(section, id) }
-PluginManager.prototype.start = function () { m.start() }
+PluginManager.prototype.start = async function () { m.start() }
+PluginManager.prototype.isLoaded = function (callback) { m.isLoaded(callback) }
 module.exports = PluginManager;

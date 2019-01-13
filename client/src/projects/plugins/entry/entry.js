@@ -29,12 +29,12 @@ Observo.onMount((imports) => {
     class QuitQuestion extends React.Component {
         onCancel() {
             if (this.props.onClose) {
-                this.props.onClose(false)
+                this.props.onClose(true)
             }
         }
-        onConfirm() {
+        onClose() {
             if (this.props.onClose) {
-                this.props.onClose(true)
+                this.props.onClose(false)
             }
         }
         render() {
@@ -42,21 +42,21 @@ Observo.onMount((imports) => {
                 intent={Intent.DANGER}
                 canEscapeKeyClose={false}
                 canOutsideClickClose={false}
-                title="hello"
+                title="Are you sure?"
 
                 isOpen={this.props.isOpen}
                 usePortal={false}
+                height={this.props.height}
             >
                 <div className={Classes.DIALOG_BODY}>
                     <p>
                         {this.props.children}
                     </p>
-
                 </div>
                 <div className={Classes.DIALOG_FOOTER}>
                     <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                        <Button onClick={this.onClose.bind(this)} intent={Intent.DANGER}>Close</Button>
                         <Button onClick={this.onCancel.bind(this)}>Cancel</Button>
-                        <Button onClick={this.onConfirm.bind(this)} intent={Intent.DANGER}>Close</Button>
                     </div>
                 </div>
             </Dialog>
@@ -563,10 +563,10 @@ Observo.onMount((imports) => {
             if (this.state.editing) {
                 navStyle = { background: "lightgray" }
             }
-            return <Layout.Grid row style={{ position: "relative" }}>
+            return <Layout.Grid row height={this.props.height} style={{ position: "relative" }}>
                 <Layout.Grid>
 
-                    <QuitQuestion isOpen={this.props.onClose} onClose={this.props.close} icon="cross">
+                    <QuitQuestion height={this.props.height + 100} isOpen={this.props.onClose} onClose={this.props.close} icon="cross">
                         <p>
                             Are you sure you wanna exit data collection? <br />
                             All current data in entry fields will be lost.
@@ -602,7 +602,7 @@ Observo.onMount((imports) => {
 
     //Page loaded into core
     imports.api.page.register(EntryMain)
-    imports.api.page.setOffset({height: -100, width: 0})
+    imports.api.page.setOffset({ height: -100, width: 0 })
 })
 Observo.register(null, {
     GLOBAL: {},

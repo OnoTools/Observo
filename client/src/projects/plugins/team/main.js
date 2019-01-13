@@ -11,7 +11,7 @@ Observo.onMount((imports) => {
     let { Tab, Tabs, ProgressBar, Alignment, Navbar, Button, InputGroup, Alert, Intent, MenuItem, Classes, Dialog, Switch } = require("@blueprintjs/core")
 
     //let a = imports.api.socket.use()
-    class Example extends React.Component {
+    class Team extends React.Component {
         constructor() {
             super()
             this.state = {
@@ -323,7 +323,7 @@ Observo.onMount((imports) => {
     }
 
 
-    imports.api.page.register(Example)
+    imports.api.page.register(Team)
 
 })
 Observo.register(null, {

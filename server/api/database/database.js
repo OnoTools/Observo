@@ -497,6 +497,7 @@ Observo.register(null, {
                     let uuid = uuidv4()
                     let query = `INSERT INTO ${pageTable} (uuid, type, data) VALUES ('${uuid}', '${type}', ?)`
                     console.log(query)
+                    //console.log(query)
                     db(projectDatabase).query(query, [data], function (err, results, fields) {
                         if (err) console.log(err)
                         callback(uuid)

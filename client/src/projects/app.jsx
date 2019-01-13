@@ -1,3 +1,14 @@
+/**
+ * Observo Project Window
+ * 
+ * This is where all the plugins from a plugin pack get loaded.
+ * Also logic for settings, and user authentications are located in here as well.
+ * 
+ * @author ImportProgram
+ */
+
+
+
 import React, { Component } from 'react'
 import { Button, Checkbox, ProgressBar, Navbar, Alignment, ButtonGroup, Menu, MenuItem, Classes } from "@blueprintjs/core";
 import { Window, TitleBar, Text } from 'react-desktop/windows';
@@ -16,7 +27,7 @@ let ProjectWindow = new EventWindow()
 import DocTabs from "./components/doctabs/doctabs.jsx"
 import Sidebar from "./components/sidebar.jsx"
 import ErrorBoundary from "./components/error.jsx"
-
+import Settings from "./components/settings.jsx"
 
 const managerLocal = require("import-window")
 import io from 'socket.io-client';
@@ -52,10 +63,17 @@ var DEFINED_API = manager.addDefined("API", "./api", true, ["CLIENT"])
 var DEFINED_PLUGIN = manager.addDefined("PLUGINS", "./plugins", false, [])
 
 
+
+
+manager.isLoaded((section, name, time) => {
+    console.log(section)
+    console.log(name)
+    console.log(time)
+})
+
 class PluginRender extends Component {
     constructor() {
         super()
-
         //States
         this.state = {
             tabs: [],
@@ -64,8 +82,6 @@ class PluginRender extends Component {
             closeTab: {},
             openTabs: {}
         }
-
-
     }
     /**
      * addTab - Adds a tab to the DocTab Component
@@ -83,12 +99,14 @@ class PluginRender extends Component {
      */
     async forceCloseTab(name, option) {
         if (!option) {
+            console.log("closing o")
             let openTabs = this.state.openTabs
             openTabs[name] = null
             let closeTab = this.state.closeTab
             closeTab[name] = false
             this.setState({ removeTab: name, openTabs: openTabs, closeTab })
         } else {
+            console.log("closing e")
             let closeTab = this.state.closeTab
             closeTab[name] = false
             this.setState({ closeTab })
@@ -136,6 +154,7 @@ class PluginRender extends Component {
          * @event SOCKET:connected Emits when the core is fully connected and can be used.
          */
         let args = managerLocal.parseArgs()
+
         let socketObject = io.connect(`http://${args.ip}/core/`)
         socketObject.on("connect", () => {
             this.props.globalEvent.emit("SOCKET:connected", { global: io, client: socketObject, clientPlugins: DEFINED_PLUGIN })
@@ -143,6 +162,9 @@ class PluginRender extends Component {
             socketObject.on("auth_vaildSignin", (data) => {
                 DEFINED_API.auth.services.API.updateAuth(data)
                 socketObject.emit("core_getProject", { project: args.project })
+            })
+            socketObject.on("disconnect", () => {
+                console.log("disconctttted")
             })
         })
         /**
@@ -183,6 +205,18 @@ class PluginRender extends Component {
             this.setState({ areaHeight: height, areaWidth: width })
         })
     }
+    openBuiltIn(name) {
+        let openTabs = this.state.openTabs
+        if (openTabs[name] == null) {
+            openTabs[name] = { builtIn: name, uuid: name }
+            let tabs = this.state.tabs
+            tabs.push({ title: name })
+            this.setState({ tabs: tabs, openTabs: openTabs })
+        } else {
+            this.setState({ selectedTab: name })
+        }
+    }
+
     /**
      * renderPages - Renders all pages to the screen.
      * - Renders the custom PLUGIN OBJECT to the screen. If not selected
@@ -193,31 +227,55 @@ class PluginRender extends Component {
     renderPages() {
         let items = []
         for (let tab in this.state.openTabs) {
-            let openPlugin = this.state.openTabs[tab]
-            if (openPlugin != null) {
-                let style = { display: "none" }
-                if (tab == this.state.selectedTab) {
-                    console.log(DEFINED_API.page.services.API.getHeightOffset(openPlugin.plugin))
-                    console.log(DEFINED_API.page.services.API.getWidthOffset(openPlugin.plugin))
-                    style = { height: (this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openPlugin.plugin)), width: (this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openPlugin.plugin)) }
-                }
-                let CustomObject = DEFINED_API.page.services.API.getPage(openPlugin.plugin)
-                let closeTab = this.state.closeTab
-                if (closeTab[tab] == null) {
-                    closeTab[tab] = false
+            let openTab = this.state.openTabs[tab]
+            //Check if its a real plugin being rendered
+            if (openTab != null) {
+                if (openTab.plugin != null) {
+                    let style = { display: "none" }
+
+                    //If this is the tab that's selected
+                    if (tab == this.state.selectedTab) {
+                        style = { height: (this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openTab.plugin)), width: (this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openTab.plugin)) }
+                    }
+                    //Now find the custom object. If this fails the error boundary will cover it.
+                    let PluginObject = DEFINED_API.page.services.API.getPage(openTab.plugin)
+                    //What tab is being closed
+                    let closeTab = this.state.closeTab
+                    if (closeTab[tab] == null) {
+                        closeTab[tab] = false
+                    }
+                    items.push(
+                        <div key={tab} style={style}>
+                            <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
+                                <PluginObject locale="en" height={(this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openTab.plugin))} width={(this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openTab.plugin))} uuid={openTab.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
+                            </ErrorBoundary>
+                        </div>)
+                    //If its not a plugin, its most likely a built in page.
                 } else {
-                    console.log("REAL")
-                    console.log(this.state.closeTab[tab])
+                    if (openTab.builtIn != null) {
+                        let style = { display: "none" }
+                        //If this is the tab that's selected
+                        if (tab == this.state.selectedTab) {
+                            style = { height: (this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openTab.plugin)), width: (this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openTab.plugin)) }
+                        }
+                        //What tab is being closed
+                        let closeTab = this.state.closeTab
+
+                        if (closeTab[tab] == null) {
+                            closeTab[tab] = false
+                        }
+                        if (openTab.builtIn.toLowerCase() == "settings") {
+                            items.push(
+                                <div key={tab} style={style}>
+                                    <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
+                                        <Settings locale="en" uuid={openTab.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
+                                    </ErrorBoundary>
+                                </div>)
+                        }
+                    }
                 }
-                items.push(
-                    <div key={tab} style={style}>
-                        <ErrorBoundary onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)}>
-                            <CustomObject locale="en" height={(this.state.areaHeight + DEFINED_API.page.services.API.getHeightOffset(openPlugin.plugin))} width={(this.state.areaWidth + DEFINED_API.page.services.API.getWidthOffset(openPlugin.plugin))} uuid={openPlugin.uuid} onClose={closeTab[tab]} close={this.forceCloseTab.bind(this, tab)} />
-                        </ErrorBoundary>
 
-                    </div>)
             }
-
         }
         return items
     }
@@ -245,7 +303,7 @@ class PluginRender extends Component {
                                 <Navbar.Group align={Alignment.LEFT}>
                                     <Button className="pt-minimal" icon="user" />
                                     <Button className="pt-minimal" icon="notifications" />
-                                    <Button className="pt-minimal" icon="cog" />
+                                    <Button className="pt-minimal" icon="cog" onClick={this.openBuiltIn.bind(this, "Settings")} />
                                 </Navbar.Group>
                             </Navbar>
                         </Layout.Grid>
@@ -307,8 +365,7 @@ export default class App extends Component {
             }
         }
         if (this.state.settings.developer.updates.toggleLoading.selected == false) {
-            mode = 2
-            manager.start()
+            mode = -1
         }
         this.setState({ localPlugins, usedPlugins, mode })
 
@@ -338,8 +395,10 @@ export default class App extends Component {
                 manager.disableModule("plugins", plugin)
             }
         }
-        this.setState({ mode: 1 })
-        manager.start()
+    
+        setTimeout(() => {
+            manager.start()
+        }, 500)
 
     }
     renderChooser() {
